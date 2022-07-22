@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 import os
-from utils.utils.custom_logger import *
-from utils.utils.custom_timer import *
-from lxml import etree
 from zipfile import ZipFile, ZIP_DEFLATED
 from fmu_handler.fmu_types import *
+
+from lxml import etree
+
+from utils.utils.custom_logger import *
+from utils.utils.custom_timer import *
 
 
 class FMUAdapter:
@@ -43,7 +45,7 @@ class FMUAdapter:
         :return:
         """
 
-        schema_path = os.path.abspath(f"{os.path.dirname(__file__)}/../schema/fmi2ModelDescription.xsd")
+        schema_path = os.path.abspath(f"{os.path.dirname(__file__)}/../data/schema/fmi2ModelDescription.xsd")
         xml_schema = None
         try:
             xml_schema = etree.XMLSchema(etree.parse(source=schema_path))
@@ -270,7 +272,7 @@ class FMUAdapter:
         log.info(f"New fmu generated: {tar_file_path}")
 
 if __name__ == '__main__':
-    fmu_path = os.path.abspath(r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\data\src_fmu\Cylinder_Hy.fmu")
+    fmu_path = os.path.abspath(r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\test\test_data\Test.fmu")
     fmu = FMUAdapter(fmu_file_path=fmu_path)
     query_scalar_variables = fmu.query_scalar_variables(FMUScalarVariable(value_reference=30001))
     inputs = fmu.query_scalar_variables(FMUScalarVariable(causality=Causality.input))
@@ -281,4 +283,3 @@ if __name__ == '__main__':
     print(fmu.get_scalar_variable_by_name(name="xCyl"))
     fmu.save_fmu_copy(tar_dir_path=r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\data\generated_fmu", file_name="test")
 
-    print()
