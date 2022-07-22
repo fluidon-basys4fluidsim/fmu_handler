@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+    fmiVersion="2.0"
+    modelName="Cylinder_Hy"
+    guid="2113931472"
+    description=""
+    generationTool="DSHplus 3.14-dev | time limited +"
+    generationDateAndTime="2022-04-14T13:13:00Z"
+    variableNamingConvention="structured"
+    numberOfEventIndicators="1">
+    <CoSimulation
+        modelIdentifier="Cylinder_Hy"
+        needsExecutionTool="false"
+        canHandleVariableCommunicationStepSize="true"
+        canInterpolateInputs="true"
+        maxOutputDerivativeOrder="1"
+        canRunAsynchronuously = "false"
+        canBeInstantiatedOnlyOncePerProcess="false"
+        canNotUseMemoryManagementFunctions="false"
+        canGetAndSetFMUstate="false"
+        providesDirectionalDerivative="false"
+        canSerializeFMUstate="false"/>
+    <DefaultExperiment startTime="0.0" stopTime="1.0" tolerance="1e-06"/>
+    <ModelVariables>
+            <ScalarVariable name="vCyl" valueReference="20000" description="SignalAusgang1_Output0" variability="continuous" causality="output"><Real /></ScalarVariable>
+        <ScalarVariable name="xCyl" valueReference="20001" description="SignalAusgang1_Output1" variability="continuous" causality="output"><Real /></ScalarVariable>
+        <ScalarVariable name="pA" valueReference="20002" description="SignalAusgang1_Output2" variability="continuous" causality="output"><Real /></ScalarVariable>
+        <ScalarVariable name="pB" valueReference="20003" description="SignalAusgang1_Output3" variability="continuous" causality="output"><Real /></ScalarVariable>
+        <ScalarVariable name="QAInput" valueReference="10000" description="SignalEingang1_Input0" variability="continuous" causality="input"><Real start="0.0"/></ScalarVariable>
+        <ScalarVariable name="QBInput" valueReference="10001" description="SignalEingang1_Input1" variability="continuous" causality="input"><Real start="0.0"/></ScalarVariable>
+        <ScalarVariable name="FCyl" valueReference="10002" description="SignalEingang1_Input2" variability="continuous" causality="input"><Real start="0.0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.E_Oel" valueReference="30000" description="V2.E-Öl" variability="fixed" causality="parameter" initial="exact"><Real start="1.4e+09"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.Volumen" valueReference="30001" description="V2.Volumen" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.Korrektur" valueReference="30002" description="V2.allgemeine Korrektur für Stahlleitungen" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.AnteilUngelLuft" valueReference="30003" description="V2.Anteil ungelöste Luft" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.PolytropenExponent" valueReference="30004" description="V2.Polytropenexponent" variability="fixed" causality="parameter" initial="exact"><Real start="1.1"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.Volumenaenderung" valueReference="30005" description="V2.Volumenänderung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.Bezugsdruck" valueReference="30006" description="V2.Bezugsdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.KavitationsGrenze" valueReference="30007" description="V2.Kavitationsgrenze" variability="fixed" causality="parameter" initial="exact"><Real start="-100000"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.DruckGradientMax" valueReference="30008" description="V2.max. Druckgradient" variability="fixed" causality="parameter" initial="exact"><Real start="1e+69"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.TDifferenz" valueReference="30009" description="V2.Temperaturdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.Korrektur1" valueReference="30010" description="V2.Explizite Angabe des E-Moduls" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.EOelAnsatz" valueReference="30011" description="V2.E-Öl Ansatz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.SolveIterative" valueReference="30012" description="V2.iterativ lösen" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.DruckAnimationMin" valueReference="30013" description="V2.DruckAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen4.DruckAnimationMax" valueReference="30014" description="V2.DruckAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="4e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.E_Oel" valueReference="30017" description="VolA.E-Öl" variability="fixed" causality="parameter" initial="exact"><Real start="1.4e+09"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.Volumen" valueReference="30018" description="VolA.Volumen" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.Korrektur" valueReference="30019" description="VolA.allgemeine Korrektur für Stahlleitungen" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.AnteilUngelLuft" valueReference="30020" description="VolA.Anteil ungelöste Luft" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.PolytropenExponent" valueReference="30021" description="VolA.Polytropenexponent" variability="fixed" causality="parameter" initial="exact"><Real start="1.1"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.Volumenaenderung" valueReference="30022" description="VolA.Volumenänderung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.Bezugsdruck" valueReference="30023" description="VolA.Bezugsdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.KavitationsGrenze" valueReference="30024" description="VolA.Kavitationsgrenze" variability="fixed" causality="parameter" initial="exact"><Real start="-100000"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.DruckGradientMax" valueReference="30025" description="VolA.max. Druckgradient" variability="fixed" causality="parameter" initial="exact"><Real start="1e+69"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.TDifferenz" valueReference="30026" description="VolA.Temperaturdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.Korrektur1" valueReference="30027" description="VolA.Explizite Angabe des E-Moduls" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.EOelAnsatz" valueReference="30028" description="VolA.E-Öl Ansatz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.SolveIterative" valueReference="30029" description="VolA.iterativ lösen" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.DruckAnimationMin" valueReference="30030" description="VolA.DruckAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen1.DruckAnimationMax" valueReference="30031" description="VolA.DruckAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="4e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.E_Oel" valueReference="30034" description="VolB.E-Öl" variability="fixed" causality="parameter" initial="exact"><Real start="1.4e+09"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.Volumen" valueReference="30035" description="VolB.Volumen" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.Korrektur" valueReference="30036" description="VolB.allgemeine Korrektur für Stahlleitungen" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.AnteilUngelLuft" valueReference="30037" description="VolB.Anteil ungelöste Luft" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.PolytropenExponent" valueReference="30038" description="VolB.Polytropenexponent" variability="fixed" causality="parameter" initial="exact"><Real start="1.1"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.Volumenaenderung" valueReference="30039" description="VolB.Volumenänderung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.Bezugsdruck" valueReference="30040" description="VolB.Bezugsdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.KavitationsGrenze" valueReference="30041" description="VolB.Kavitationsgrenze" variability="fixed" causality="parameter" initial="exact"><Real start="-100000"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.DruckGradientMax" valueReference="30042" description="VolB.max. Druckgradient" variability="fixed" causality="parameter" initial="exact"><Real start="1e+69"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.TDifferenz" valueReference="30043" description="VolB.Temperaturdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.Korrektur1" valueReference="30044" description="VolB.Explizite Angabe des E-Moduls" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.EOelAnsatz" valueReference="30045" description="VolB.E-Öl Ansatz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.SolveIterative" valueReference="30046" description="VolB.iterativ lösen" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.DruckAnimationMin" valueReference="30047" description="VolB.DruckAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen2.DruckAnimationMax" valueReference="30048" description="VolB.DruckAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="4e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.E_Oel" valueReference="30051" description="V1.E-Öl" variability="fixed" causality="parameter" initial="exact"><Real start="1.4e+09"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.Volumen" valueReference="30052" description="V1.Volumen" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.Korrektur" valueReference="30053" description="V1.allgemeine Korrektur für Stahlleitungen" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.AnteilUngelLuft" valueReference="30054" description="V1.Anteil ungelöste Luft" variability="fixed" causality="parameter" initial="exact"><Real start="0.001"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.PolytropenExponent" valueReference="30055" description="V1.Polytropenexponent" variability="fixed" causality="parameter" initial="exact"><Real start="1.1"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.Volumenaenderung" valueReference="30056" description="V1.Volumenänderung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.Bezugsdruck" valueReference="30057" description="V1.Bezugsdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1e+07"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.KavitationsGrenze" valueReference="30058" description="V1.Kavitationsgrenze" variability="fixed" causality="parameter" initial="exact"><Real start="-100000"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.DruckGradientMax" valueReference="30059" description="V1.max. Druckgradient" variability="fixed" causality="parameter" initial="exact"><Real start="1e+69"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.TDifferenz" valueReference="30060" description="V1.Temperaturdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.Korrektur1" valueReference="30061" description="V1.Explizite Angabe des E-Moduls" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.EOelAnsatz" valueReference="30062" description="V1.E-Öl Ansatz" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.SolveIterative" valueReference="30063" description="V1.iterativ lösen" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.DruckAnimationMin" valueReference="30064" description="V1.DruckAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Volumen3.DruckAnimationMax" valueReference="30065" description="V1.DruckAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="4e+07"/></ScalarVariable>
+        <ScalarVariable name="defaultHydFluid.temperature" valueReference="30068" description="Default hydraulic fluid (HLP 46).Fluidtemperatur" variability="fixed" causality="parameter" initial="exact"><Real start="313"/></ScalarVariable>
+        <ScalarVariable name="defaultHydFluid.Dampfdruck" valueReference="30069" description="Default hydraulic fluid (HLP 46).Dampfdruck" variability="fixed" causality="parameter" initial="exact"><Real start="0.5"/></ScalarVariable>
+        <ScalarVariable name="defaultHydFluid.pDistAbsolutdruck" valueReference="30070" description="Default hydraulic fluid (HLP 46).Dampfdruck als Absolutdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="defaultHydFluid.Bunsenkoeffizient" valueReference="30071" description="Default hydraulic fluid (HLP 46).Bunsenkoeffizient" variability="fixed" causality="parameter" initial="exact"><Real start="0.1"/></ScalarVariable>
+        <ScalarVariable name="defaultHydFluid.parThermalConductivity" valueReference="30072" description="Default hydraulic fluid (HLP 46).Wärmeleitfähigkeit" variability="fixed" causality="parameter" initial="exact"><Real start="0.14"/></ScalarVariable>
+        <ScalarVariable name="Signal7.WertAnimationMin" valueReference="30077" description="pB.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal7.WertAnimationMax" valueReference="30078" description="pB.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Signal6.WertAnimationMin" valueReference="30081" description="pA.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal6.WertAnimationMax" valueReference="30082" description="pA.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Signal5.WertAnimationMin" valueReference="30085" description="FCyl.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal5.WertAnimationMax" valueReference="30086" description="FCyl.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Signal4.WertAnimationMin" valueReference="30089" description="QB.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal4.WertAnimationMax" valueReference="30090" description="QB.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Signal3.WertAnimationMin" valueReference="30093" description="QA.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal3.WertAnimationMax" valueReference="30094" description="QA.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="M1.FAnimationMin" valueReference="30097" description="MechZyl.FAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-1000"/></ScalarVariable>
+        <ScalarVariable name="M1.FAnimationMax" valueReference="30098" description="MechZyl.FAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="1000"/></ScalarVariable>
+        <ScalarVariable name="Signal1.WertAnimationMin" valueReference="30101" description="vCyl.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal1.WertAnimationMax" valueReference="30102" description="vCyl.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Signal2.WertAnimationMin" valueReference="30105" description="xCyl.WertAnimationMin" variability="fixed" causality="parameter" initial="exact"><Real start="-100"/></ScalarVariable>
+        <ScalarVariable name="Signal2.WertAnimationMax" valueReference="30106" description="xCyl.WertAnimationMax" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.KolbenDurchmesser" valueReference="30109" description="Cylinder.Kolbendurchmesser" variability="fixed" causality="parameter" initial="exact"><Real start="0.1"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.StangenDurchmesser1" valueReference="30110" description="Cylinder.Stangendurchmesser 1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.StangenDurchmesser2" valueReference="30111" description="Cylinder.Stangendurchmesser 2" variability="fixed" causality="parameter" initial="exact"><Real start="0.05"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.wegmax" valueReference="30112" description="Cylinder.Weg max" variability="fixed" causality="parameter" initial="exact"><Real start="0.1"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.wegmin" valueReference="30113" description="Cylinder.Weg min" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.Masse" valueReference="30114" description="Cylinder.Masse" variability="fixed" causality="parameter" initial="exact"><Real start="100"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.LosbrechKraft" valueReference="30115" description="Cylinder.Losbrechkraft" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.MischReibkraft" valueReference="30116" description="Cylinder.Mischreibkraft" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.GeschwindigkeitMischReibung" valueReference="30117" description="Cylinder.Geschwindigkeit Mischreibung" variability="fixed" causality="parameter" initial="exact"><Real start="0.005"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ViskoseDaempfung" valueReference="30118" description="Cylinder.viskose Dämpfung" variability="fixed" causality="parameter" initial="exact"><Real start="10000"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.StribeckAsymm" valueReference="30119" description="Cylinder.Asymmetrische Stribeck-Reibkraft" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.LosbrechKraftAus" valueReference="30120" description="Cylinder.Losbrechkraft Ausfahren" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.MischReibkraftAus" valueReference="30121" description="Cylinder.Mischreibkraft Ausfahren" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.GeschwindigkeitMischReibungAus" valueReference="30122" description="Cylinder.Geschwindigkeit Mischreibung Ausfahren" variability="fixed" causality="parameter" initial="exact"><Real start="0.005"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ViskoseDaempfungAus" valueReference="30123" description="Cylinder.viskose Dämpfung Ausfahren" variability="fixed" causality="parameter" initial="exact"><Real start="10000"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ReibungsVerlust" valueReference="30124" description="Cylinder.Reibungsverlust" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.deltadeltav" valueReference="30125" description="Cylinder.Grenzgeschwindigkeit Reibverlust" variability="fixed" causality="parameter" initial="exact"><Real start="0.01"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.Orientierung" valueReference="30126" description="Cylinder.Orientierung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ExterneLeckage1" valueReference="30127" description="Cylinder.Externe Leckage 1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ExterneLeckage2" valueReference="30128" description="Cylinder.Externe Leckage 2" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.InterneLeckage" valueReference="30129" description="Cylinder.Interne Leckage" variability="fixed" causality="parameter" initial="exact"><Real start="1.66667e-13"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.Federsteifigkeit1" valueReference="30130" description="Cylinder.Federsteifigkeit 1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.FederLaenge1" valueReference="30131" description="Cylinder.Federlänge 1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.Federsteifigkeit2" valueReference="30132" description="Cylinder.Federsteifigkeit 2" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.FederLaenge2" valueReference="30133" description="Cylinder.Federlänge 2" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.FluidMassenBeruecksichtigung" valueReference="30134" description="Cylinder.Fluidmassenberücksichtigung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.ReibKennfeld" valueReference="30135" description="Cylinder.Reibkennfeld" variability="fixed" causality="parameter" initial="exact"><Real start="-1"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.pPropFaktor" valueReference="30136" description="Cylinder.Druckabhängigkeit" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Zylinder1.pPropFaktorAus" valueReference="30137" description="Cylinder.Druckabhängigkeit Ausfahren" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor0" valueReference="30142" description="Output.Faktor0" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset0" valueReference="30143" description="Output.Offset0" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor1" valueReference="30144" description="Output.Faktor1" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset1" valueReference="30145" description="Output.Offset1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor2" valueReference="30146" description="Output.Faktor2" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset2" valueReference="30147" description="Output.Offset2" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor3" valueReference="30148" description="Output.Faktor3" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset3" valueReference="30149" description="Output.Offset3" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor4" valueReference="30150" description="Output.Faktor4" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset4" valueReference="30151" description="Output.Offset4" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor5" valueReference="30152" description="Output.Faktor5" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset5" valueReference="30153" description="Output.Offset5" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor6" valueReference="30154" description="Output.Faktor6" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset6" valueReference="30155" description="Output.Offset6" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor7" valueReference="30156" description="Output.Faktor7" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset7" valueReference="30157" description="Output.Offset7" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Faktor8" valueReference="30158" description="Output.Faktor8" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalAusgang1.Offset8" valueReference="30159" description="Output.Offset8" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Blende1.Volumenstrom" valueReference="30162" description="ResA.Volumenstrom" variability="fixed" causality="parameter" initial="exact"><Real start="0.0005"/></ScalarVariable>
+        <ScalarVariable name="Blende1.Druckdifferenz" valueReference="30163" description="ResA.Druckdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="500000"/></ScalarVariable>
+        <ScalarVariable name="Blende1.LohmBerechnung" valueReference="30164" description="ResA.Lohmberechnung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Blende1.Lohmwert" valueReference="30165" description="ResA.Lohmwert" variability="fixed" causality="parameter" initial="exact"><Real start="500"/></ScalarVariable>
+        <ScalarVariable name="Blende1.LohmKennfeld" valueReference="30166" description="ResA.Kennfeld V-Faktor" variability="fixed" causality="parameter" initial="exact"><Real start="-1"/></ScalarVariable>
+        <ScalarVariable name="Blende1.LaminarBeruecksichtigung" valueReference="30167" description="ResA.Laminarberücksichtigung" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="Blende2.Volumenstrom" valueReference="30170" description="ResB.Volumenstrom" variability="fixed" causality="parameter" initial="exact"><Real start="0.0005"/></ScalarVariable>
+        <ScalarVariable name="Blende2.Druckdifferenz" valueReference="30171" description="ResB.Druckdifferenz" variability="fixed" causality="parameter" initial="exact"><Real start="500000"/></ScalarVariable>
+        <ScalarVariable name="Blende2.LohmBerechnung" valueReference="30172" description="ResB.Lohmberechnung" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="Blende2.Lohmwert" valueReference="30173" description="ResB.Lohmwert" variability="fixed" causality="parameter" initial="exact"><Real start="500"/></ScalarVariable>
+        <ScalarVariable name="Blende2.LohmKennfeld" valueReference="30174" description="ResB.Kennfeld V-Faktor" variability="fixed" causality="parameter" initial="exact"><Real start="-1"/></ScalarVariable>
+        <ScalarVariable name="Blende2.LaminarBeruecksichtigung" valueReference="30175" description="ResB.Laminarberücksichtigung" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor0" valueReference="30178" description="Input.Faktor0" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset0" valueReference="30179" description="Input.Offset0" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor1" valueReference="30180" description="Input.Faktor1" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset1" valueReference="30181" description="Input.Offset1" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor2" valueReference="30182" description="Input.Faktor2" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset2" valueReference="30183" description="Input.Offset2" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor3" valueReference="30184" description="Input.Faktor3" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset3" valueReference="30185" description="Input.Offset3" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor4" valueReference="30186" description="Input.Faktor4" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset4" valueReference="30187" description="Input.Offset4" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor5" valueReference="30188" description="Input.Faktor5" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset5" valueReference="30189" description="Input.Offset5" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor6" valueReference="30190" description="Input.Faktor6" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset6" valueReference="30191" description="Input.Offset6" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor7" valueReference="30192" description="Input.Faktor7" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset7" valueReference="30193" description="Input.Offset7" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Faktor8" valueReference="30194" description="Input.Faktor8" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="SignalEingang1.Offset8" valueReference="30195" description="Input.Offset8" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="HLP461.temperature" valueReference="30202" description="Fluid.Fluidtemperatur" variability="fixed" causality="parameter" initial="exact"><Real start="313"/></ScalarVariable>
+        <ScalarVariable name="HLP461.Dampfdruck" valueReference="30203" description="Fluid.Dampfdruck" variability="fixed" causality="parameter" initial="exact"><Real start="0.5"/></ScalarVariable>
+        <ScalarVariable name="HLP461.pDistAbsolutdruck" valueReference="30204" description="Fluid.Dampfdruck als Absolutdruck" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="HLP461.Bunsenkoeffizient" valueReference="30205" description="Fluid.Bunsenkoeffizient" variability="fixed" causality="parameter" initial="exact"><Real start="0.1"/></ScalarVariable>
+        <ScalarVariable name="HLP461.parThermalConductivity" valueReference="30206" description="Fluid.Wärmeleitfähigkeit" variability="fixed" causality="parameter" initial="exact"><Real start="0.14"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.AnzahlPartikelKlassen" valueReference="30209" description="PartikelDaten.Anzahl der Klassen" variability="fixed" causality="parameter" initial="exact"><Real start="20"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.PartikelKlassenString" valueReference="30210" description="PartikelDaten.PartikelKlassenString" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.EinheitenFaktor" valueReference="30211" description="PartikelDaten.Einheit der Klassen" variability="fixed" causality="parameter" initial="exact"><Real start="1e-06"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.PartikelDichte" valueReference="30212" description="PartikelDaten.Partikeldichte" variability="fixed" causality="parameter" initial="exact"><Real start="2650"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.Sphaerizitaet" valueReference="30213" description="PartikelDaten.Sphärizität" variability="fixed" causality="parameter" initial="exact"><Real start="0.7"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.Formkorrektur" valueReference="30214" description="PartikelDaten.Formkorrekturfaktor" variability="fixed" causality="parameter" initial="exact"><Real start="1.65"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.PartikelSchrittweite" valueReference="30215" description="PartikelDaten.Aktualisierungsintervall" variability="fixed" causality="parameter" initial="exact"><Real start="0.025"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.ZeitRafferFaktor" valueReference="30216" description="PartikelDaten.Zeitrafferfaktor" variability="fixed" causality="parameter" initial="exact"><Real start="1"/></ScalarVariable>
+        <ScalarVariable name="PartikelDaten.ZeitRafferStart" valueReference="30217" description="PartikelDaten.Startpunkt Zeitraffer" variability="fixed" causality="parameter" initial="exact"><Real start="0"/></ScalarVariable>
+
+    </ModelVariables>
+    <ModelStructure>
+            <Outputs>
+            <Unknown index="1" />
+            <Unknown index="2" />
+            <Unknown index="3" />
+            <Unknown index="4" />
+        </Outputs>
+
+    </ModelStructure>
+</fmiModelDescription>
