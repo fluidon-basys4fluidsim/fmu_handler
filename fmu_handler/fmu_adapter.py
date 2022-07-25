@@ -19,20 +19,32 @@ class FMUAdapter:
     """
 
     def __init__(self, fmu_file_path: str):
+        """
+        Instantiates an fmu that is defined by the fmu_file_path.
+        Inserting an absolute path is recommended.
+
+        :param fmu_file_path:
+        :return:
+        """
         self._fmu_path = fmu_file_path
         self._model_variables: ModelVariables = ModelVariables()
-        self._fmu_tree = None
         self._fmu_xml = None
-        self._xml_data = None
+        self._fmu_tree = None
         self.__load_fmu()
         self.__validate_fmu()
         self.__parse_fmu()
 
     def __load_fmu(self):
+        """
+        Loads fmu-file and initializes the xml data (_fmu_xml) and the xml tree (_fmu_tree).
+        If no fmu file is found, FileNotFoundError is raised.
+
+        :return:
+        """
         if self._fmu_path:
-            archive = ZipFile(self._fmu_path)
-            self._xml_data = archive.open("modelDescription.xml")
-            self._fmu_xml = etree.parse(source=self._xml_data)
+            with ZipFile(self._fmu_path, "r") as archive:
+                with archive.open("modelDescription.xml") as description:
+                    self._fmu_xml = etree.parse(source=description)
             self._fmu_tree = self._fmu_xml.getroot()
         else:
             raise FileNotFoundError(f"Fmu_path was not set.")
@@ -221,6 +233,13 @@ class FMUAdapter:
         self.__set_scalar_variable_by_name(set_values=FMUScalarVariable(name=name, start=value))
 
     def __update_xml_model_description_by_name(self, name: str):
+        """
+        Updates a single ScalarVariable from the fmu object in the xml model description (_fmu_tree).
+        The updated ScalarVariable is defined by its name.
+
+        :param name:
+        :return:
+        """
         variable = self.get_scalar_variable_by_name(name=name)
         element = self._fmu_tree.find(f"ModelVariables//ScalarVariable[@name='{name}']")
 
@@ -242,11 +261,24 @@ class FMUAdapter:
         if variable.start is not None:
             element[0].attrib["start"] = str(variable.start)
 
-    def update_xml_model_description(self):
+    def __update_xml_model_description(self):
+        """
+        Updates the entire fmu object to the xml model description (_fmu_tree).
+
+        :return:
+        """
         for variable in self._model_variables.scalar_variables:
             self.__update_xml_model_description_by_name(name=variable.name)
 
-    def save_fmu_copy(self, tar_dir_path: str, file_name: str = None):
+    def save_fmu_copy(self, tar_dir_path: str, file_name: str = None) -> str:
+        """
+        Saves a copy from the original fmu into the defined target directory including the updated modelDescription.xml
+        of the current fmu instance.
+
+        :param tar_dir_path:
+        :param file_name:
+        :return:
+        """
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
         # if no name is given, the original name is taken
         if file_name is None:
@@ -256,7 +288,7 @@ class FMUAdapter:
         tar_file_path = os.path.join(tar_dir_path, file_name)
 
         # update tree and generate modelDescription.xml
-        self.update_xml_model_description()
+        self.__update_xml_model_description()
         new_model_description_xml = etree.tostring(self._fmu_tree, encoding="UTF-8", xml_declaration=True)
 
         # copy fmu and insert new modelDescription.xml
@@ -267,19 +299,11 @@ class FMUAdapter:
                     # copy all other files except for the modelDescription.xml
                     if item.filename != 'modelDescription.xml':
                         zip_out.writestr(item, buffer)
+                del buffer
+                del item
                 # write new customized modelDescription.xml
                 zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
         log.info(f"New fmu generated: {tar_file_path}")
 
-if __name__ == '__main__':
-    fmu_path = os.path.abspath(r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\test\test_data\Test.fmu")
-    fmu = FMUAdapter(fmu_file_path=fmu_path)
-    query_scalar_variables = fmu.query_scalar_variables(FMUScalarVariable(value_reference=30001))
-    inputs = fmu.query_scalar_variables(FMUScalarVariable(causality=Causality.input))
-    outputs = fmu.query_scalar_variables(FMUScalarVariable(causality=Causality.output))
-    parameters = fmu.query_scalar_variables(FMUScalarVariable(causality=Causality.parameter))
-    print(fmu.get_scalar_variable_by_name(name="xCyl"))
-    fmu.set_start_value(name="xCyl", value=69)
-    print(fmu.get_scalar_variable_by_name(name="xCyl"))
-    fmu.save_fmu_copy(tar_dir_path=r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\data\generated_fmu", file_name="test")
+        return tar_file_path
 
