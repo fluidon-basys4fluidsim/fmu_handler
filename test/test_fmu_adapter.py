@@ -1,3 +1,4 @@
+import logging
 import unittest
 import os
 from utils.utils.custom_logger import *
@@ -41,6 +42,7 @@ class TestFMUAdapter(unittest.TestCase):
 
     def test_get_scalar_variable_by_name(self):
         fmu = self.fmu
+        print(fmu)
 
         query_name = fmu.get_scalar_variable_by_name(name="xCyl")
         self.assertEqual(query_name.name, "xCyl")
@@ -66,5 +68,4 @@ class TestFMUAdapter(unittest.TestCase):
         fmu = FMUAdapter(fmu_file_path=file_name)
         self.assertEqual(fmu.get_scalar_variable_by_name(name="QAInput").start, str(69))
 
-        # TODO check how to close the file before removing
         os.remove(path=r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\test\test_data\dummy_fmu.fmu")

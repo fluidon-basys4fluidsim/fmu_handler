@@ -44,7 +44,9 @@ class FMUScalarVariable:
     """
     ScalarVariable definitions according to FMI2.0 standard.
     Caution, some properties not yet included.
+
     # TODO some properties not yet included.
+    # TODO Variablen beschreiben.
     """
     name: Optional[str] = None
     data_type: Optional[FMUDataTypes] = None
@@ -57,5 +59,9 @@ class FMUScalarVariable:
 
 
 class ModelVariables:
+    """
+    Wrapper class that contains ScalarVariables and more accorfing to FMI2.0 standard.
+
+    """
     def __init__(self):
         self.scalar_variables: list[FMUScalarVariable] = []

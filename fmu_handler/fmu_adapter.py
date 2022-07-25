@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 import os
 from zipfile import ZipFile, ZIP_DEFLATED
+
+import lxml.etree
 from fmu_handler.fmu_types import *
 
 from lxml import etree
 
-from utils.utils.custom_logger import *
 from utils.utils.custom_timer import *
 
 
@@ -21,47 +22,51 @@ class FMUAdapter:
     def __init__(self, fmu_file_path: str):
         """
         Instantiates an fmu that is defined by the fmu_file_path.
-        Inserting an absolute path is recommended.
 
-        :param fmu_file_path:
+        :param fmu_file_path: Specifies the path of the fmu. Absolute path is recommended.
         :return:
         """
         self._fmu_path = fmu_file_path
         self._model_variables: ModelVariables = ModelVariables()
-        self._fmu_xml = None
-        self._fmu_tree = None
-        self.__load_fmu()
-        self.__validate_fmu()
-        self.__parse_fmu()
+        self._fmu_xml: lxml.etree._ElementTree = None
+        self._fmu_tree: lxml.etree._Element = None
 
-    def __load_fmu(self):
+        self._fmu_xml, self._fmu_tree = self.__load_fmu(fmu_file_path=self._fmu_path)
+        schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
+        self.__parse_fmu(fmu_tree=self._fmu_tree)
+
+    def __load_fmu(self, fmu_file_path: str) -> (lxml.etree._ElementTree, lxml.etree._Element):
         """
-        Loads fmu-file and initializes the xml data (_fmu_xml) and the xml tree (_fmu_tree).
+        Loads fmu file and initializes the xml data (fmu_xml) and the xml tree (fmu_tree).
         If no fmu file is found, FileNotFoundError is raised.
 
-        :return:
+        :param fmu_file_path: Specifies the path of the fmu. Absolute path is recommended.
+        :return: fmu_xml: ElementTree Object, root if the ElementTree, containing _Element
         """
-        if self._fmu_path:
-            with ZipFile(self._fmu_path, "r") as archive:
+        if fmu_file_path:
+            with ZipFile(fmu_file_path, "r") as archive:
                 with archive.open("modelDescription.xml") as description:
-                    self._fmu_xml = etree.parse(source=description)
-            self._fmu_tree = self._fmu_xml.getroot()
+                    fmu_xml = etree.parse(source=description)
+            fmu_tree = fmu_xml.getroot()
         else:
             raise FileNotFoundError(f"Fmu_path was not set.")
 
-    def __validate_fmu(self) -> bool:
+        return fmu_xml, fmu_tree
+
+    def __validate_fmu(self, fmu_xml: lxml.etree._ElementTree) -> bool:
         """
         Validation against the fmi2ModelDescription.xsd schema.
         If validation failed, only a log info is transmitted.
 
-        :return:
+        :param fmu_xml: xml Description as _ElementTree to be validated.
+        :return: True if validation succeeded. False, if not.
         """
 
         schema_path = os.path.abspath(f"{os.path.dirname(__file__)}/../data/schema/fmi2ModelDescription.xsd")
         xml_schema = None
         try:
             xml_schema = etree.XMLSchema(etree.parse(source=schema_path))
-            if xml_schema.validate(self._fmu_xml):
+            if xml_schema.validate(fmu_xml):
                 return True
             else:
                 log.info(f"fmi2ModelDescription.xsd schema validation failed.")
@@ -71,15 +76,17 @@ class FMUAdapter:
 
         return False
 
-    def __parse_fmu(self):
+    def __parse_fmu(self, fmu_tree: lxml.etree._Element):
         """
         Parsing the xml structure into a List of ScalarVariable Objects for better handling.
 
         :return:
         """
 
-        variables = self._fmu_tree.findall("ModelVariables//ScalarVariable")
-        for index, variable in enumerate(variables):
+        variables = list()
+        xml_variables = fmu_tree.findall("ModelVariables//ScalarVariable")
+
+        for index, variable in enumerate(xml_variables):
             name = variable.get("name")
             value_reference = int(variable.get("valueReference"))
             var = variable.get("causality")
@@ -112,16 +119,19 @@ class FMUAdapter:
                 unit=unit,
                 description=description,
             )
-            self._model_variables.scalar_variables.append(scalar_variable)
+
             log.debug(f"{index}: scalar variable added: {scalar_variable}")
+            variables.append(scalar_variable)
+
+        self._model_variables.scalar_variables = variables
 
     def query_scalar_variables(self, query: FMUScalarVariable) -> list[FMUScalarVariable]:
         """
         Returns a list of all ScalarVariable that match the query request. Not queried attributes should be set None.
         If no ScalarVariable was found, list is returned empty.
 
-        :param query:
-        :return:
+        :param query: Defines parameter of attributes that should be queried.
+        :return: A list of ScalarVariables that matches the query request.
         """
         variables = []
 
@@ -149,10 +159,10 @@ class FMUAdapter:
     def get_scalar_variable_by_name(self, name: str) -> Optional[FMUScalarVariable]:
         """
         Returns a ScalarVariable that match the queried name.
-        If no ScalarVariable was found, return None.
 
-        :param name:
-        :return:
+        :param name: Name of the requested ScalarVariable.
+        :return: ScalarVariable that matches the query request.
+        None is returned if none or multiple ScalarVariables were found.
         """
 
         variable = self.query_scalar_variables(FMUScalarVariable(name=name))
@@ -175,7 +185,7 @@ class FMUAdapter:
         Caution, only tags and attributes, which are present in the initial modelDescription.xml can be updated.
         Otherwise, a KeyError is being raised.
 
-        :param set_values:
+        :param set_values: Values encapsulated in a FMUScalarVariable that should be set.
         :return:
         """
         if not set_values.name:
@@ -226,8 +236,8 @@ class FMUAdapter:
         """
         This method encapsulates setting the staring value using __set_scalar_variable_by_name().
 
-        :param name:
-        :param value:
+        :param name: Name of the desired ScalarVariable, of which the start value should be edited.
+        :param value: Start value to be set.
         :return:
         """
         self.__set_scalar_variable_by_name(set_values=FMUScalarVariable(name=name, start=value))
@@ -237,7 +247,7 @@ class FMUAdapter:
         Updates a single ScalarVariable from the fmu object in the xml model description (_fmu_tree).
         The updated ScalarVariable is defined by its name.
 
-        :param name:
+        :param name: Defines the ScalarVariable, which should be updated in the _fmu_tree.
         :return:
         """
         variable = self.get_scalar_variable_by_name(name=name)
@@ -275,9 +285,10 @@ class FMUAdapter:
         Saves a copy from the original fmu into the defined target directory including the updated modelDescription.xml
         of the current fmu instance.
 
-        :param tar_dir_path:
-        :param file_name:
-        :return:
+        :param tar_dir_path: Target directory where the new fmu should be stored.
+        :param file_name: Fmu name can be specified optionally. Can be passed with or without suffix ".fmu".
+        If not specified, the name of the original fmu is taken.
+        :return: Full file name including path of the generated fmu.
         """
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
         # if no name is given, the original name is taken
@@ -306,4 +317,3 @@ class FMUAdapter:
         log.info(f"New fmu generated: {tar_file_path}")
 
         return tar_file_path
-
