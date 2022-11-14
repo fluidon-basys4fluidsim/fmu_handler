@@ -101,14 +101,22 @@ class FMUAdapter:
             initial = Initial[var] if var else None
             data_type = variable[0].tag
             var = variable[0].get("start")
-            if data_type == FMUDataTypes.Real:
+            if data_type == FMUDataTypes.real:
                 start = float(var) if var else None
-            elif data_type == FMUDataTypes.Integer:
+                data_type = FMUDataTypes.real
+            elif data_type == FMUDataTypes.integer:
                 start = int(var) if var else None
-            elif data_type == FMUDataTypes.Boolean:
+                data_type = FMUDataTypes.integer
+            elif data_type == FMUDataTypes.boolean:
                 start = bool(var) if var else None
-            else:  # enum and string are considered equally here.
+                data_type = FMUDataTypes.boolean
+            elif data_type == FMUDataTypes.enumeration:
+                # enum and string are considered equally here.
                 start = str(var) if var else None
+                data_type = FMUDataTypes.enumeration
+            else:
+                start = str(var) if var else None
+                data_type = FMUDataTypes.string
             unit = variable.get("unit")
             description = variable.get("description")
             can_handle_multiple_set_per_time_instant = variable.get("canHandleMultipleSetPerTimeInstant")

@@ -17,7 +17,7 @@ class TestFMUAdapter(unittest.TestCase):
     tar_dir = test_data_path
     number_inputs = 3
     number_outputs = 4
-    number_scalar_variabes = 179
+    number_scalar_variables = 179
 
     def setUp(self):
         self.fmu = FMUAdapter(fmu_file_path=self.test_fmu_path)
@@ -29,7 +29,7 @@ class TestFMUAdapter(unittest.TestCase):
         fmu = self.fmu
 
         query_scalar_variables = fmu.query_scalar_variables(query=FMUScalarVariable())
-        self.assertEqual(len(query_scalar_variables), self.number_scalar_variabes)
+        self.assertEqual(len(query_scalar_variables), self.number_scalar_variables)
 
         query_inputs = fmu.query_scalar_variables(query=FMUScalarVariable(causality=Causality.input))
         self.assertEqual(len(query_inputs), self.number_inputs)

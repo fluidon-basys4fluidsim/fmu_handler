@@ -6,6 +6,7 @@ __all__ = [
     "FMUScalarVariable", "Causality", "Variability", "Initial", "FMUDataTypes", "FMUUnit", "ModelVariables"
 ]
 
+
 class Causality(Enum):
     parameter = 0
     calculatedParameter = 1
@@ -30,11 +31,11 @@ class Initial(Enum):
 
 
 class FMUDataTypes(Enum):
-    Real = 0
-    Integer = 1
-    Boolean = 2
-    String = 3
-    Enumeration = 4
+    real = 0
+    integer = 1
+    boolean = 2
+    string = 3
+    enumeration = 4
 
 
 class FMUUnit(str):
@@ -48,7 +49,7 @@ class FMUScalarVariable:
     Caution, some properties not yet included.
 
     # TODO some properties not yet included.
-    # TODO Variablen beschreiben.
+    # TODO describe variables.
     """
     name: Optional[str] = None
     data_type: Optional[FMUDataTypes] = None
