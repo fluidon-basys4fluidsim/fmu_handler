@@ -1,8 +1,10 @@
-import typing
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
+__all__ = [
+    "FMUScalarVariable", "Causality", "Variability", "Initial", "FMUDataTypes", "FMUUnit", "ModelVariables"
+]
 
 class Causality(Enum):
     parameter = 0
@@ -51,7 +53,7 @@ class FMUScalarVariable:
     name: Optional[str] = None
     data_type: Optional[FMUDataTypes] = None
     value_reference: Optional[int] = None
-    start: Optional[typing.Union[str, float, bool, int, Enum]] = None
+    start: Optional[Union[str, float, bool, int, Enum]] = None
     causality: Optional[Causality] = None
     initial: Optional[Initial] = None
     unit: Optional[FMUUnit] = None
@@ -60,7 +62,7 @@ class FMUScalarVariable:
 
 class ModelVariables:
     """
-    Wrapper class that contains ScalarVariables and more accorfing to FMI2.0 standard.
+    Wrapper class that contains ScalarVariables and more according to FMI2.0 standard.
 
     """
     def __init__(self):

@@ -1,16 +1,20 @@
-import logging
 import unittest
 import os
-from utils.utils.custom_logger import *
+from pathlib import Path
+from utils.custom_logger import *
 from fmu_handler.fmu_adapter import FMUAdapter
 from fmu_handler.fmu_types import *
 
 # change debugging here
+log = get_logger("FMU_Handler")
 log.setLevel(logging.INFO)
 
+test_data_path = Path(__file__).parents[0].joinpath("test_data").absolute()
+
+
 class TestFMUAdapter(unittest.TestCase):
-    test_fmu_path = os.path.abspath(f"{os.path.dirname(__file__)}/test_data/Src_Test.fmu")
-    tar_dir = os.path.abspath(f"{os.path.dirname(__file__)}/test_data")
+    test_fmu_path = test_data_path.joinpath("Src_Test.fmu").absolute()
+    tar_dir = test_data_path
     number_inputs = 3
     number_outputs = 4
     number_scalar_variabes = 179
@@ -68,4 +72,4 @@ class TestFMUAdapter(unittest.TestCase):
         fmu = FMUAdapter(fmu_file_path=file_name)
         self.assertEqual(fmu.get_scalar_variable_by_name(name="QAInput").start, str(69))
 
-        os.remove(path=r"D:\01_Git\01_BaSys4FluidSim\fmu_handler\test\test_data\dummy_fmu.fmu")
+        os.remove(path=file_name)

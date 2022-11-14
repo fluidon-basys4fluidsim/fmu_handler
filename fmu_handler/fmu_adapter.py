@@ -1,13 +1,17 @@
-from dataclasses import dataclass
-import os
+from typing import Union, Optional
+from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
-
+from pathlib import Path
+from utils.custom_logger import *
 import lxml.etree
 from fmu_handler.fmu_types import *
-
 from lxml import etree
 
-from utils.utils.custom_timer import *
+__all__ = [
+    "FMUAdapter"
+]
+
+log = get_logger("FMU_Handler")
 
 
 class FMUAdapter:
@@ -19,23 +23,25 @@ class FMUAdapter:
 
     """
 
-    def __init__(self, fmu_file_path: str):
+    def __init__(self, fmu_file_path: Union[Path, str]):
         """
         Instantiates an fmu that is defined by the fmu_file_path.
 
         :param fmu_file_path: Specifies the path of the fmu. Absolute path is recommended.
         :return:
         """
-        self._fmu_path = fmu_file_path
+        self._fmu_path = Path(fmu_file_path).absolute()
+        if not self._fmu_path.is_file():
+            raise FileNotFoundError(f"FMU could not found: {self._fmu_path.as_posix()}")
         self._model_variables: ModelVariables = ModelVariables()
-        self._fmu_xml: lxml.etree._ElementTree = None
-        self._fmu_tree: lxml.etree._Element = None
+        self._fmu_xml: etree._ElementTree = None
+        self._fmu_tree: etree._Element = None
 
         self._fmu_xml, self._fmu_tree = self.__load_fmu(fmu_file_path=self._fmu_path)
         schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
         self.__parse_fmu(fmu_tree=self._fmu_tree)
 
-    def __load_fmu(self, fmu_file_path: str) -> (lxml.etree._ElementTree, lxml.etree._Element):
+    def __load_fmu(self, fmu_file_path: Path) -> (lxml.etree._ElementTree, lxml.etree._Element):
         """
         Loads fmu file and initializes the xml data (fmu_xml) and the xml tree (fmu_tree).
         If no fmu file is found, FileNotFoundError is raised.
@@ -62,7 +68,7 @@ class FMUAdapter:
         :return: True if validation succeeded. False, if not.
         """
 
-        schema_path = os.path.abspath(f"{os.path.dirname(__file__)}/../data/schema/fmi2ModelDescription.xsd")
+        schema_path = Path(__file__).parents[1].joinpath("data", "schema", "fmi2ModelDescription.xsd")
         xml_schema = None
         try:
             xml_schema = etree.XMLSchema(etree.parse(source=schema_path))
@@ -232,7 +238,7 @@ class FMUAdapter:
             else:
                 raise KeyError(f"Desired attribute is not set in original fmu. Value could not be set.")
 
-    def set_start_value(self, name: str, value: typing.Union[str, float, bool, int, Enum]):
+    def set_start_value(self, name: str, value: Union[str, float, bool, int, Enum]):
         """
         This method encapsulates setting the staring value using __set_scalar_variable_by_name().
 
@@ -280,7 +286,7 @@ class FMUAdapter:
         for variable in self._model_variables.scalar_variables:
             self.__update_xml_model_description_by_name(name=variable.name)
 
-    def save_fmu_copy(self, tar_dir_path: str, file_name: str = None) -> str:
+    def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
         """
         Saves a copy from the original fmu into the defined target directory including the updated modelDescription.xml
         of the current fmu instance.
@@ -292,11 +298,15 @@ class FMUAdapter:
         """
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
         # if no name is given, the original name is taken
-        if file_name is None:
-            file_name = os.path.basename(p=self._fmu_path)
-        if file_name[-4:] != ".fmu":
-            file_name = f"{file_name}.fmu"
-        tar_file_path = os.path.join(tar_dir_path, file_name)
+
+        if file_name:
+            file_name = Path(file_name)
+        else:
+            file_name = self._fmu_path
+        if file_name.suffix == "":
+            file_name = file_name.with_suffix(suffix=".fmu")
+
+        tar_file_path = Path.joinpath(Path(tar_dir_path).absolute(), file_name)
 
         # update tree and generate modelDescription.xml
         self.__update_xml_model_description()
