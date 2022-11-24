@@ -1,4 +1,5 @@
-from typing import Union, Optional
+import io
+from typing import Union, Optional, List
 from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
 from pathlib import Path
@@ -6,6 +7,7 @@ from utils.custom_logger import *
 import lxml.etree
 from fmu_handler.fmu_types import *
 from lxml import etree
+from aas_generator.stores.file_stores import FileData
 
 __all__ = [
     "FMUAdapter"
@@ -23,34 +25,44 @@ class FMUAdapter:
 
     """
 
-    def __init__(self, fmu_file_path: Union[Path, str]):
+    def __init__(self, fmu_file: Union[Path, str, FileData]):
         """
         Instantiates an fmu that is defined by the fmu_file_path.
 
-        :param fmu_file_path: Specifies the path of the fmu. Absolute path is recommended.
+        :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
         :return:
         """
-        self._fmu_path = Path(fmu_file_path).absolute()
-        if not self._fmu_path.is_file():
-            raise FileNotFoundError(f"FMU could not found: {self._fmu_path.as_posix()}")
-        self._model_variables: ModelVariables = ModelVariables()
+        if isinstance(fmu_file, FileData):
+            self._fmu_path = Path(fmu_file.name).name
+            self._fmu_file = fmu_file.data
+        else:
+            self._fmu_path = Path(fmu_file).absolute()
+            if not self._fmu_path.is_file():
+                raise FileNotFoundError(f"FMU could not found: {self._fmu_path.as_posix()}")
+            with open(file=self._fmu_path, mode="rb") as file:
+                self._fmu_file = io.BytesIO(file.read())
+
+        self.model_description: FMIModelDescription = None
         self._fmu_xml: etree._ElementTree = None
         self._fmu_tree: etree._Element = None
 
-        self._fmu_xml, self._fmu_tree = self.__load_fmu(fmu_file_path=self._fmu_path)
+        self._fmu_xml, self._fmu_tree = self.__load_fmu()
         schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
-        self.__parse_fmu(fmu_tree=self._fmu_tree)
+        self.__parse_fmu_model_description(fmu_tree=self._fmu_tree)
 
-    def __load_fmu(self, fmu_file_path: Path) -> (lxml.etree._ElementTree, lxml.etree._Element):
+    def __load_fmu(self, fmu_file: Optional[io.BytesIO] = None) -> (lxml.etree._ElementTree, lxml.etree._Element):
         """
         Loads fmu file and initializes the xml data (fmu_xml) and the xml tree (fmu_tree).
         If no fmu file is found, FileNotFoundError is raised.
 
-        :param fmu_file_path: Specifies the path of the fmu. Absolute path is recommended.
+        :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
         :return: fmu_xml: ElementTree Object, root if the ElementTree, containing _Element
         """
-        if fmu_file_path:
-            with ZipFile(fmu_file_path, "r") as archive:
+        if fmu_file is None:
+            fmu_file = self._fmu_file
+
+        if fmu_file:
+            with ZipFile(file=fmu_file, mode="r") as archive:
                 with archive.open("modelDescription.xml") as description:
                     fmu_xml = etree.parse(source=description)
             fmu_tree = fmu_xml.getroot()
@@ -82,62 +94,129 @@ class FMUAdapter:
 
         return False
 
-    def __parse_fmu(self, fmu_tree: lxml.etree._Element):
+    def __parse_fmu_default_experiment_parameter(self, fmu_tree: lxml.etree._Element) -> DefaultExperiment:
+        xml_node = fmu_tree.find("DefaultExperiment")
+        if xml_node is not None:
+            start_time = float(xml_node.get("startTime")) if "startTime" in xml_node.attrib else None
+            stop_time = float(xml_node.get("stopTime")) if "stopTime" in xml_node.attrib else None
+            tolerance = float(xml_node.get("tolerance")) if "tolerance" in xml_node.attrib else None
+            step_size = float(xml_node.get("stepSize")) if "stepSize" in xml_node.attrib else None
+            default_experiment = DefaultExperiment(start_time=start_time,
+                                                   stop_time=stop_time,
+                                                   tolerance=tolerance,
+                                                   step_size=step_size)
+        else:
+            raise KeyError("Could not find DefaultExperiment parameters in FMU modelDescription.xml.")
+        return default_experiment
+
+    def __parse_fmu_simulation_type(self, fmu_tree: lxml.etree._Element) -> Union[CoSimulation, ModelExchange]:
+        # CoSimulation
+        simulation_type = None
+        if fmu_tree.find("CoSimulation") is not None:
+            xml_node = fmu_tree.find("CoSimulation")
+            simulation_type = \
+                CoSimulation(model_identifier=xml_node.get("modelIdentifier"),
+                             needs_execution_tool=(xml_node.get("needsExecutionTool") == "true"),
+                             can_handle_variable_communication_step_size=(xml_node.get(
+                                 "canHandleVariableCommunicationStepSize") == "true"),
+                             can_interpolate_inputs=(xml_node.get("canInterpolateInputs") == "true"),
+                             max_output_derivative_order=xml_node.get("maxOutputDerivativeOrder"),
+                             can_run_asynchronuously=(xml_node.get("canRunAsynchronuously") == "true"),
+                             can_be_instantiated_only_once_per_process=(xml_node.get(
+                                 "canBeInstantiatedOnlyOncePerProcess") == "true"),
+                             can_not_use_memory_management_functions=(xml_node.get(
+                                 "canNotUseMemoryManagementFunctions") == "true"),
+                             can_get_and_set_fmu_state=(xml_node.get("canGetAndSetFMUstate") == "true"),
+                             provides_directional_derivative=(xml_node.get("providesDirectionalDerivative") == "true"),
+                             can_serialize_fmu_state=(xml_node.get("canSerializeFMUstate") == "true"))
+
+        elif fmu_tree.find("ModelExchange") is not None:
+            # TODO Model exchange
+            raise NotImplementedError("Parsing ModelExchange is not implemented.")
+        else:
+            raise KeyError("Could not find CoSimulation parameters in FMU modelDescription.xml.")
+
+        return simulation_type
+
+    def __parse_fmu_scalar_variables(self, fmu_tree: lxml.etree._Element) -> List[FMUScalarVariable]:
+        variables = list()
+        xml_variables = fmu_tree.findall("ModelVariables//ScalarVariable")
+        if xml_variables:
+            for index, variable in enumerate(xml_variables):
+                name = variable.get("name")
+                value_reference = int(variable.get("valueReference"))
+                var = variable.get("causality")
+                causality = Causality[var] if var else None
+                var = variable.get("initial")
+                initial = Initial[var] if var else None
+                data_type = variable[0].tag
+                var = variable[0].get("start")
+                if data_type == FMUDataTypes.real:
+                    start = float(var) if var else None
+                    data_type = FMUDataTypes.real
+                elif data_type == FMUDataTypes.integer:
+                    start = int(var) if var else None
+                    data_type = FMUDataTypes.integer
+                elif data_type == FMUDataTypes.boolean:
+                    start = bool(var) if var else None
+                    data_type = FMUDataTypes.boolean
+                elif data_type == FMUDataTypes.enumeration:
+                    # enum and string are considered equally here.
+                    start = str(var) if var else None
+                    data_type = FMUDataTypes.enumeration
+                else:
+                    start = str(var) if var else None
+                    data_type = FMUDataTypes.string
+                unit = variable.get("unit")
+                description = variable.get("description")
+                can_handle_multiple_set_per_time_instant = variable.get("canHandleMultipleSetPerTimeInstant")
+
+                scalar_variable = FMUScalarVariable(
+                    name=name,
+                    start=start,
+                    value_reference=value_reference,
+                    causality=causality,
+                    initial=initial,
+                    data_type=data_type,
+                    unit=unit,
+                    description=description,
+                    can_handle_multiple_set_per_time_instant=can_handle_multiple_set_per_time_instant
+                )
+
+                log.debug(f"{index}: scalar variable added: {scalar_variable}")
+                variables.append(scalar_variable)
+        else:
+            raise KeyError("Could not find FMUScalarVariable parameters in FMU modelDescription.xml.")
+
+        return variables
+
+    def __parse_fmu_model_description(self, fmu_tree: lxml.etree._Element):
         """
-        Parsing the xml structure into a List of ScalarVariable Objects for better handling.
+        Parsing the xml modelDescription.xml into an object for better handling.
 
         :return:
         """
+        if fmu_tree is not None:
+            self.model_description = \
+                FMIModelDescription(fmi_version=fmu_tree.get("fmiVersion"),
+                                    model_name=fmu_tree.get("modelName"),
+                                    guid=fmu_tree.get("guid"),
+                                    variable_naming_convention=fmu_tree.get("variableNamingConvention"),
+                                    number_of_event_indicators=fmu_tree.get("numberOfEventIndicators"),
+                                    model_variables=ModelVariables(scalar_variables=
+                                                                   self.__parse_fmu_scalar_variables(fmu_tree=fmu_tree)),
+                                    default_experiment=self.__parse_fmu_default_experiment_parameter(fmu_tree=fmu_tree),
+                                    fmu_simulation_type=self.__parse_fmu_simulation_type(fmu_tree=fmu_tree),
+                                    description=fmu_tree.get("description"),
+                                    author=fmu_tree.get("author"),
+                                    version=fmu_tree.get("version"),
+                                    copyright=fmu_tree.get("copyright"),
+                                    license=fmu_tree.get("license"),
+                                    generation_tool=fmu_tree.get("generationTool"),
+                                    generation_date_and_time=fmu_tree.get("generationDateAndTime"))
+        else:
+            raise KeyError("Could not parse modelDescription parameters from FMU modelDescription.xml.")
 
-        variables = list()
-        xml_variables = fmu_tree.findall("ModelVariables//ScalarVariable")
-
-        for index, variable in enumerate(xml_variables):
-            name = variable.get("name")
-            value_reference = int(variable.get("valueReference"))
-            var = variable.get("causality")
-            causality = Causality[var] if var else None
-            var = variable.get("initial")
-            initial = Initial[var] if var else None
-            data_type = variable[0].tag
-            var = variable[0].get("start")
-            if data_type == FMUDataTypes.real:
-                start = float(var) if var else None
-                data_type = FMUDataTypes.real
-            elif data_type == FMUDataTypes.integer:
-                start = int(var) if var else None
-                data_type = FMUDataTypes.integer
-            elif data_type == FMUDataTypes.boolean:
-                start = bool(var) if var else None
-                data_type = FMUDataTypes.boolean
-            elif data_type == FMUDataTypes.enumeration:
-                # enum and string are considered equally here.
-                start = str(var) if var else None
-                data_type = FMUDataTypes.enumeration
-            else:
-                start = str(var) if var else None
-                data_type = FMUDataTypes.string
-            unit = variable.get("unit")
-            description = variable.get("description")
-            can_handle_multiple_set_per_time_instant = variable.get("canHandleMultipleSetPerTimeInstant")
-            prefix = variable.get("valueReference")
-            range = variable.get("range")
-
-            scalar_variable = FMUScalarVariable(
-                name=name,
-                start=start,
-                value_reference=value_reference,
-                causality=causality,
-                initial=initial,
-                data_type=data_type,
-                unit=unit,
-                description=description,
-            )
-
-            log.debug(f"{index}: scalar variable added: {scalar_variable}")
-            variables.append(scalar_variable)
-
-        self._model_variables.scalar_variables = variables
 
     def query_scalar_variables(self, query: FMUScalarVariable) -> list[FMUScalarVariable]:
         """
@@ -149,7 +228,7 @@ class FMUAdapter:
         """
         variables = []
 
-        for element in self._model_variables.scalar_variables:
+        for element in self.model_description.model_variables.scalar_variables:
             if query.name and not element.name == query.name:
                 continue
             if query.value_reference and not element.value_reference == query.value_reference:
@@ -291,7 +370,7 @@ class FMUAdapter:
 
         :return:
         """
-        for variable in self._model_variables.scalar_variables:
+        for variable in self.model_description.model_variables.scalar_variables:
             self.__update_xml_model_description_by_name(name=variable.name)
 
     def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
@@ -308,11 +387,10 @@ class FMUAdapter:
         # if no name is given, the original name is taken
 
         if file_name:
-            file_name = Path(file_name)
+            file_name = Path(file_name).stem
         else:
-            file_name = self._fmu_path
-        if file_name.suffix == "":
-            file_name = file_name.with_suffix(suffix=".fmu")
+            file_name = self._fmu_path.stem
+        file_name = Path(file_name).with_suffix(suffix=".fmu")
 
         tar_file_path = Path.joinpath(Path(tar_dir_path).absolute(), file_name)
 
@@ -321,8 +399,8 @@ class FMUAdapter:
         new_model_description_xml = etree.tostring(self._fmu_tree, encoding="UTF-8", xml_declaration=True)
 
         # copy fmu and insert new modelDescription.xml
-        with ZipFile(self._fmu_path, 'r') as zip_in:
-            with ZipFile(tar_file_path, 'w', compression=ZIP_DEFLATED) as zip_out:
+        with ZipFile(file=self._fmu_file, mode='r') as zip_in:
+            with ZipFile(file=str(tar_file_path), mode='w', compression=ZIP_DEFLATED) as zip_out:
                 for item in zip_in.infolist():
                     buffer = zip_in.read(item.filename)
                     # copy all other files except for the modelDescription.xml

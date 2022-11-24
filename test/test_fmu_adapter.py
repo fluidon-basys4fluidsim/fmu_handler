@@ -20,7 +20,7 @@ class TestFMUAdapter(unittest.TestCase):
     number_scalar_variables = 179
 
     def setUp(self):
-        self.fmu = FMUAdapter(fmu_file_path=self.test_fmu_path)
+        self.fmu = FMUAdapter(fmu_file=self.test_fmu_path)
 
     def tearDown(self) -> None:
         del self.fmu
@@ -69,7 +69,7 @@ class TestFMUAdapter(unittest.TestCase):
         self.test_set_start_value()
         file_name = fmu.save_fmu_copy(file_name="dummy_fmu", tar_dir_path=self.tar_dir)
 
-        fmu = FMUAdapter(fmu_file_path=file_name)
+        fmu = FMUAdapter(fmu_file=file_name)
         self.assertEqual(fmu.get_scalar_variable_by_name(name="QAInput").start, str(69))
 
         os.remove(path=file_name)

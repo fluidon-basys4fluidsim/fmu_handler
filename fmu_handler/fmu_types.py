@@ -1,9 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 __all__ = [
-    "FMUScalarVariable", "Causality", "Variability", "Initial", "FMUDataTypes", "FMUUnit", "ModelVariables"
+    "ModelVariables", "FMUScalarVariable", "ModelExchange", "FMIModelDescription", "FMUSimulationType",
+    "DefaultExperiment", "CoSimulation",
+    "Causality", "Variability", "Initial", "FMUDataTypes", "FMUUnit",
 ]
 
 
@@ -47,24 +49,79 @@ class FMUScalarVariable:
     """
     ScalarVariable definitions according to FMI2.0 standard.
     Caution, some properties not yet included.
-
+    All properties get default None for querieing the object
     # TODO some properties not yet included.
-    # TODO describe variables.
+
     """
-    name: Optional[str] = None
-    data_type: Optional[FMUDataTypes] = None
-    value_reference: Optional[int] = None
-    start: Optional[Union[str, float, bool, int, Enum]] = None
-    causality: Optional[Causality] = None
-    initial: Optional[Initial] = None
-    unit: Optional[FMUUnit] = None
+    name: str = None
+    value_reference: int = None
+    causality: Causality = None
+    data_type: FMUDataTypes = None
+    variability: Variability = None
     description: Optional[str] = None
+    initial: Optional[Initial] = None
+    can_handle_multiple_set_per_time_instant: Optional[bool] = None
+    # data_type attributes
+    start: Optional[Union[str, float, bool, int, Enum]] = None
+    unit: Optional[FMUUnit] = None
 
-
+@dataclass
 class ModelVariables:
     """
     Wrapper class that contains ScalarVariables and more according to FMI2.0 standard.
 
     """
-    def __init__(self):
-        self.scalar_variables: list[FMUScalarVariable] = []
+    scalar_variables: List[FMUScalarVariable] = field(default_factory=list)
+
+
+@dataclass
+class CoSimulation:
+    model_identifier: str
+    needs_execution_tool: bool = False
+    can_handle_variable_communication_step_size: bool = False
+    can_interpolate_inputs: bool = False
+    max_output_derivative_order: int = 0
+    can_run_asynchronuously: bool = False
+    can_be_instantiated_only_once_per_process: bool = False
+    can_not_use_memory_management_functions: bool = False
+    can_get_and_set_fmu_state: bool = False
+    provides_directional_derivative: bool = False
+    can_serialize_fmu_state: bool = False
+
+
+@dataclass
+class ModelExchange:
+    pass
+
+
+FMUSimulationType = Union[CoSimulation, ModelExchange]
+
+
+@dataclass
+class DefaultExperiment:
+    start_time: Optional[float] = None
+    stop_time: Optional[float] = None
+    tolerance: Optional[float] = None
+    step_size: Optional[float] = None
+
+
+@dataclass
+class FMIModelDescription:
+    fmi_version: str
+    model_name: str
+    guid: str
+    variable_naming_convention: str
+    number_of_event_indicators: int
+
+    model_variables: ModelVariables
+
+    default_experiment: DefaultExperiment
+    fmu_simulation_type: FMUSimulationType
+
+    description: Optional[str] = None
+    author: Optional[str] = None
+    version: Optional[str] = None
+    copyright: Optional[str] = None
+    license: Optional[str] = None
+    generation_tool: Optional[str] = None
+    generation_date_and_time: Optional[str] = None
