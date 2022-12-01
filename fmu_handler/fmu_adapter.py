@@ -151,16 +151,16 @@ class FMUAdapter:
                 initial = Initial[var] if var else None
                 data_type = variable[0].tag
                 var = variable[0].get("start")
-                if data_type == FMUDataTypes.real:
+                if data_type == "Real":
                     start = float(var) if var else None
                     data_type = FMUDataTypes.real
-                elif data_type == FMUDataTypes.integer:
+                elif data_type == "Integer":
                     start = int(var) if var else None
                     data_type = FMUDataTypes.integer
-                elif data_type == FMUDataTypes.boolean:
+                elif data_type == "Boolean":
                     start = bool(var) if var else None
                     data_type = FMUDataTypes.boolean
-                elif data_type == FMUDataTypes.enumeration:
+                elif data_type == "Enumeration":
                     # enum and string are considered equally here.
                     start = str(var) if var else None
                     data_type = FMUDataTypes.enumeration
