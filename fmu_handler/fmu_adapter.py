@@ -1,4 +1,5 @@
 import io
+import mimetypes
 from typing import Union, Optional, List
 from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -8,6 +9,7 @@ import lxml.etree
 from fmu_handler.fmu_types import *
 from lxml import etree
 from aas_generator.stores.file_stores import FileData
+from aas_generator.utilities.aas_helpers import get_mime_type_from_path
 
 __all__ = [
     "FMUAdapter"
@@ -24,6 +26,9 @@ class FMUAdapter:
     - Save a new copy of the FMU with the updated parameters
 
     """
+
+    _fmu_file: io.BytesIO
+    _fmu_path: Path
 
     def __init__(self, fmu_file: Union[Path, str, FileData]):
         """
@@ -146,26 +151,26 @@ class FMUAdapter:
                 name = variable.get("name")
                 value_reference = int(variable.get("valueReference"))
                 var = variable.get("causality")
-                causality = Causality[var] if var else None
+                causality = Causality[var] if var is not None else None
                 var = variable.get("initial")
-                initial = Initial[var] if var else None
+                initial = Initial[var] if var is not None else None
                 data_type = variable[0].tag
                 var = variable[0].get("start")
                 if data_type == "Real":
-                    start = float(var) if var else None
+                    start = float(var) if var is not None else None
                     data_type = FMUDataTypes.real
                 elif data_type == "Integer":
-                    start = int(var) if var else None
+                    start = int(var) if var is not None else None
                     data_type = FMUDataTypes.integer
                 elif data_type == "Boolean":
-                    start = bool(var) if var else None
+                    start = bool(var) if var is not None else None
                     data_type = FMUDataTypes.boolean
                 elif data_type == "Enumeration":
                     # enum and string are considered equally here.
-                    start = str(var) if var else None
+                    start = str(var) if var is not None else None
                     data_type = FMUDataTypes.enumeration
                 else:
-                    start = str(var) if var else None
+                    start = str(var) if var is not None else None
                     data_type = FMUDataTypes.string
                 unit = variable.get("unit")
                 description = variable.get("description")
@@ -373,6 +378,43 @@ class FMUAdapter:
         for variable in self.model_description.model_variables.scalar_variables:
             self.__update_xml_model_description_by_name(name=variable.name)
 
+    def get_file_data(self, file_name: Optional[Union[Path, str]] = None) -> FileData:
+        """
+        Updates all variables and creates an FMU FileData object.
+        :param file_name: Fmu name can be specified optionally. Can be passed with or without suffix ".fmu".
+        If not specified, the name of the original fmu is taken.
+        :return:
+        """
+        # copy, edit, write fmu because files inside an archive cannot simply be changed.
+        # if no name is given, the original name is taken
+
+        if file_name:
+            file_name = Path(file_name).stem
+        else:
+            file_name = self._fmu_path.stem
+        file_name = Path(file_name).with_suffix(suffix=".fmu")
+
+        # update tree and generate modelDescription.xml
+        self.__update_xml_model_description()
+        new_model_description_xml = etree.tostring(self._fmu_tree, encoding="UTF-8", xml_declaration=True)
+
+        # copy fmu and insert new modelDescription.xml
+        io_file_container = io.BytesIO()
+        with ZipFile(file=self._fmu_file, mode='r') as zip_in:
+            with ZipFile(file=io_file_container, mode='w', compression=ZIP_DEFLATED) as zip_out:
+                for item in zip_in.infolist():
+                    buffer = zip_in.read(item.filename)
+                    # copy all other files except for the modelDescription.xml
+                    if item.filename != 'modelDescription.xml':
+                        zip_out.writestr(item, buffer)
+                del buffer
+                del item
+                # write new customized modelDescription.xml
+                zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
+
+        data_file = FileData(name=file_name, data=io_file_container, mime_type=get_mime_type_from_path(url=file_name))
+        return data_file
+
     def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
         """
         Saves a copy from the original fmu into the defined target directory including the updated modelDescription.xml
@@ -386,30 +428,6 @@ class FMUAdapter:
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
         # if no name is given, the original name is taken
 
-        if file_name:
-            file_name = Path(file_name).stem
-        else:
-            file_name = self._fmu_path.stem
-        file_name = Path(file_name).with_suffix(suffix=".fmu")
-
-        tar_file_path = Path.joinpath(Path(tar_dir_path).absolute(), file_name)
-
-        # update tree and generate modelDescription.xml
-        self.__update_xml_model_description()
-        new_model_description_xml = etree.tostring(self._fmu_tree, encoding="UTF-8", xml_declaration=True)
-
-        # copy fmu and insert new modelDescription.xml
-        with ZipFile(file=self._fmu_file, mode='r') as zip_in:
-            with ZipFile(file=str(tar_file_path), mode='w', compression=ZIP_DEFLATED) as zip_out:
-                for item in zip_in.infolist():
-                    buffer = zip_in.read(item.filename)
-                    # copy all other files except for the modelDescription.xml
-                    if item.filename != 'modelDescription.xml':
-                        zip_out.writestr(item, buffer)
-                del buffer
-                del item
-                # write new customized modelDescription.xml
-                zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
-        log.info(f"New fmu generated: {tar_file_path}")
-
-        return tar_file_path
+        fmu_file_data = self.get_file_data(file_name=file_name)
+        log.info(f"New fmu generated: {fmu_file_data.name}")
+        return fmu_file_data.save_file(dir_path=tar_dir_path)
