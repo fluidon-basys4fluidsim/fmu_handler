@@ -209,7 +209,8 @@ class FMUAdapter:
                                     variable_naming_convention=fmu_tree.get("variableNamingConvention"),
                                     number_of_event_indicators=fmu_tree.get("numberOfEventIndicators"),
                                     model_variables=ModelVariables(scalar_variables=
-                                                                   self.__parse_fmu_scalar_variables(fmu_tree=fmu_tree)),
+                                                                   self.__parse_fmu_scalar_variables(
+                                                                       fmu_tree=fmu_tree)),
                                     default_experiment=self.__parse_fmu_default_experiment_parameter(fmu_tree=fmu_tree),
                                     fmu_simulation_type=self.__parse_fmu_simulation_type(fmu_tree=fmu_tree),
                                     description=fmu_tree.get("description"),
@@ -221,7 +222,6 @@ class FMUAdapter:
                                     generation_date_and_time=fmu_tree.get("generationDateAndTime"))
         else:
             raise KeyError("Could not parse modelDescription parameters from FMU modelDescription.xml.")
-
 
     def query_scalar_variables(self, query: FMUScalarVariable) -> list[FMUScalarVariable]:
         """
@@ -365,7 +365,20 @@ class FMUAdapter:
 
         # setting the value tag and its attribute
         if variable.data_type is not None:
-            element[0].tag = str(variable.data_type)
+            if variable.data_type == FMUDataTypes.real:
+                data_type = "Real"
+            elif variable.data_type == FMUDataTypes.integer:
+                data_type = "Integer"
+            elif variable.data_type == FMUDataTypes.boolean:
+                data_type = "Boolean"
+            elif variable.data_type == FMUDataTypes.enumeration:
+                data_type = "Enumeration"
+            elif variable.data_type == FMUDataTypes.string:
+                data_type = "String"
+            else:
+                raise TypeError(f"Datatype could not be parsed.")
+            element[0].tag = str(data_type)
+
         if variable.start is not None:
             element[0].attrib["start"] = str(variable.start)
 
