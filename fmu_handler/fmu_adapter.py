@@ -1,5 +1,4 @@
 import io
-import mimetypes
 from typing import Union, Optional, List
 from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -8,8 +7,8 @@ from utils.custom_logger import *
 import lxml.etree
 from fmu_handler.fmu_types import *
 from lxml import etree
-from aas_generator.stores.file_stores import FileData
-from aas_generator.utilities.aas_helpers import get_mime_type_from_path
+from src.aas_generator.stores.file_stores import FileData
+from src.aas_generator.utilities import get_mime_type_from_path
 
 __all__ = [
     "FMUAdapter"
@@ -43,13 +42,13 @@ class FMUAdapter:
         else:
             self._fmu_path = Path(fmu_file).absolute()
             if not self._fmu_path.is_file():
-                raise FileNotFoundError(f"FMU could not found: {self._fmu_path.as_posix()}")
+                raise FileNotFoundError(f"FMU could not be found: {self._fmu_path.as_posix()}")
             with open(file=self._fmu_path, mode="rb") as file:
                 self._fmu_file = io.BytesIO(file.read())
 
-        self.model_description: FMIModelDescription = None
-        self._fmu_xml: etree._ElementTree = None
-        self._fmu_tree: etree._Element = None
+        self.model_description: Optional[FMIModelDescription] = None
+        self._fmu_xml: Optional[etree._ElementTree] = None
+        self._fmu_tree: Optional[etree._Element] = None
 
         self._fmu_xml, self._fmu_tree = self.__load_fmu()
         schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
@@ -442,5 +441,6 @@ class FMUAdapter:
         # if no name is given, the original name is taken
 
         fmu_file_data = self.get_file_data(file_name=file_name)
-        log.info(f"New fmu generated: {fmu_file_data.name}")
-        return fmu_file_data.save_file(dir_path=tar_dir_path)
+        fmu_path = fmu_file_data.save_file(dir_path=tar_dir_path)
+        log.info(f"Fmu {fmu_file_data.name} saved to {fmu_path}.")
+        return fmu_path
