@@ -7,8 +7,8 @@ from utils.custom_logger import *
 import lxml.etree
 from fmu_handler.fmu_types import *
 from lxml import etree
-from src.aas_generator.stores.file_stores import FileData
-from src.aas_generator.utilities import get_mime_type_from_path
+from aas_generator.stores.file_stores import FileData
+from aas_generator.utilities.aas_helpers import get_mime_type_from_path
 
 __all__ = [
     "FMUAdapter"
