@@ -423,7 +423,7 @@ class FMUAdapter:
                 # write new customized modelDescription.xml
                 zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
 
-        data_file = FileData(name=file_name, data=io_file_container, mime_type=get_mime_type_from_path(url=file_name))
+        data_file = FileData(name=file_name, file_data=io_file_container)
         return data_file
 
     def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
@@ -440,6 +440,6 @@ class FMUAdapter:
         # if no name is given, the original name is taken
 
         fmu_file_data = self.get_file_data(file_name=file_name)
-        fmu_path = fmu_file_data.save_file(dir_path=tar_dir_path)
+        fmu_path = fmu_file_data.save_file(universal_path=tar_dir_path)
         log.info(f"Fmu {fmu_file_data.name} saved to {fmu_path}.")
         return fmu_path
