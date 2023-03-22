@@ -7,8 +7,7 @@ from utils.custom_logger import *
 import lxml.etree
 from fmu_handler.fmu_types import *
 from lxml import etree
-from aas_generator.stores.file_stores import FileData
-from aas_generator.utilities.aas_helpers import get_mime_type_from_path
+from aas_generator.stores.file_stores import FileData, get_mime_type_from_path
 
 __all__ = [
     "FMUAdapter"
@@ -31,7 +30,7 @@ class FMUAdapter:
 
     def __init__(self, fmu_file: Union[Path, str, FileData]):
         """
-        Instantiates an fmu that is defined by the fmu_file_path.
+        Instantiates a fmu that is defined by the fmu_file_path.
 
         :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
         :return:
