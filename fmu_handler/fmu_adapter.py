@@ -399,7 +399,7 @@ class FMUAdapter:
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
         # if no name is given, the original name is taken
 
-        if file_name:
+        if file_name is not None:
             file_name = Path(file_name).stem
         else:
             file_name = self._fmu_path.stem
