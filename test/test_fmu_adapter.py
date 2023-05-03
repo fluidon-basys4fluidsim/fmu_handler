@@ -73,3 +73,18 @@ class TestFMUAdapter(unittest.TestCase):
         self.assertEqual(fmu.get_scalar_variable_by_name(name="QAInput").start, str(69))
 
         os.remove(path=file_name)
+
+
+class TestOtherFMUs(unittest.TestCase):
+    all_fmus = list()
+    for file in test_data_path.iterdir():
+        if file.suffix == ".fmu":
+            all_fmus.append(file.absolute())
+
+    def test_general_fmu_operations(self):
+        for fmu_file in self.all_fmus:
+            print(fmu_file)
+            fmu = FMUAdapter(fmu_file=fmu_file)
+            print(fmu.model_description)
+            for scalar_variable in fmu.model_description.model_variables.scalar_variables:
+                print(scalar_variable)
