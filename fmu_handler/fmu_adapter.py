@@ -231,23 +231,25 @@ class FMUAdapter:
         """
         variables = []
 
+
         for element in self.model_description.model_variables.scalar_variables:
-            if query.name and not element.name == query.name:
-                continue
-            if query.value_reference and not element.value_reference == query.value_reference:
-                continue
-            if query.causality and not element.causality == query.causality:
-                continue
-            if query.initial and not element.initial == query.initial:
-                continue
-            if query.data_type and not element.data_type == query.data_type:
-                continue
-            if query.unit and not element.unit == query.unit:
-                continue
-            if query.description and not element.description == query.description:
-                continue
-            if query.start and not element.start == query.start:
-                continue
+            if query is not None:
+                if query.name and not element.name == query.name:
+                    continue
+                if query.value_reference and not element.value_reference == query.value_reference:
+                    continue
+                if query.causality and not element.causality == query.causality:
+                    continue
+                if query.initial and not element.initial == query.initial:
+                    continue
+                if query.data_type and not element.data_type == query.data_type:
+                    continue
+                if query.unit and not element.unit == query.unit:
+                    continue
+                if query.description and not element.description == query.description:
+                    continue
+                if query.start and not element.start == query.start:
+                    continue
 
             variables.append(element)
         return variables
@@ -388,6 +390,28 @@ class FMUAdapter:
         """
         for variable in self.model_description.model_variables.scalar_variables:
             self.__update_xml_model_description_by_name(name=variable.name)
+
+    def __remove_xml_variable_by_name(self, name: str):
+        """
+        Deletes a ScalarVariable from the fmu object in the xml model description (_fmu_tree).
+        The deleted ScalarVariable is defined by its name.
+
+        :param name: Defines the ScalarVariable, which should be deleted in the _fmu_tree.
+        :return:
+        """
+        element = self._fmu_tree.find(f"ModelVariables//ScalarVariable[@name='{name}']")
+        element.getparent().remove(element)
+
+    def remove_scalar_variable_by_name(self, name: str):
+        """
+        This method encapsulates deleting the ScalarVariable from the fmu object in the xml model description (_fmu_tree).
+
+        :param name: Name of the desired ScalarVariable, which should be deleted.
+        :return:
+        """
+        variable = self.get_scalar_variable_by_name(name=name)
+        self.model_description.model_variables.scalar_variables.remove(variable)
+        self.__remove_xml_variable_by_name(name=name)
 
     def get_file_data(self, file_name: Optional[Union[Path, str]] = None) -> FileData:
         """

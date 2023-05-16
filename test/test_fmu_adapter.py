@@ -63,6 +63,13 @@ class TestFMUAdapter(unittest.TestCase):
         with self.assertRaises(KeyError):
             fmu.set_start_value(name="xCyl", value=69)
 
+    def test_remove_scalar_variable_by_name(self):
+        fmu = self.fmu
+
+        for scalar_variable in fmu.query_scalar_variables(query=None):
+            fmu.remove_scalar_variable_by_name(name=scalar_variable.name)
+        file_name = fmu.save_fmu_copy(file_name="deleted_parameter_fmu", tar_dir_path=self.tar_dir)
+
     def test_save_fmu_copy(self):
         fmu = self.fmu
 
