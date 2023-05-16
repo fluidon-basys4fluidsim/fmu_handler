@@ -254,7 +254,7 @@ class FMUAdapter:
             variables.append(element)
         return variables
 
-    def get_scalar_variable_by_name(self, name: str) -> Optional[FMUScalarVariable]:
+    def get_scalar_variable_by_name(self, name: Optional[str] = None) -> Optional[FMUScalarVariable]:
         """
         Returns a ScalarVariable that match the queried name.
 
