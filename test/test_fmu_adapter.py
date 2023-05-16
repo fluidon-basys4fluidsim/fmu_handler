@@ -66,9 +66,9 @@ class TestFMUAdapter(unittest.TestCase):
     def test_remove_scalar_variable_by_name(self):
         fmu = self.fmu
 
-        for scalar_variable in fmu.query_scalar_variables(query=None):
+        for scalar_variable in fmu.query_scalar_variables():
             fmu.remove_scalar_variable_by_name(name=scalar_variable.name)
-        file_name = fmu.save_fmu_copy(file_name="deleted_parameter_fmu", tar_dir_path=self.tar_dir)
+        file_name = fmu.save_fmu_copy(file_name="deleted_parameter", tar_dir_path=self.tar_dir)
 
     def test_save_fmu_copy(self):
         fmu = self.fmu
