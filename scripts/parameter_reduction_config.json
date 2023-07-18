@@ -1,8 +1,9 @@
 {
-    "keep_elements": [
-		"Signal1*"
-    ],
-    "delete_elements": [
-		"*"
-    ]
+  "_comment": "Generally, all elements are selected not to be deleted. First, all elements that fit to the delete_list are tagged to be deleted. Then, elements to be kept might untag those again. Finally, all tagged scalar variables are deleted from the fmu model description xml.",
+  "keep_elements": [
+    "Signal1*"
+  ],
+  "delete_elements": [
+    "*"
+  ]
 }
