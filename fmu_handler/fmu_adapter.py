@@ -20,7 +20,7 @@ log_config: dict = {
     "format": "%(asctime)s [%(levelname)s] [%(module)s] [%(funcName)s] - %(message)s",
     "datefmt": '%y-%m-%d %H:%M:%S',
     "stream": sys.stdout,
-    }
+}
 log = logging.getLogger("fmu_adapter")
 log.setLevel(log_config["log_level"])
 handler = logging.StreamHandler(log_config['stream'])
@@ -37,81 +37,75 @@ class FMUAdapter:
     - Save a new copy of the FMU with the updated parameters
 
     """
+    model_description: FMIModelDescription
+    _file_name: Path
+    _data: io.BytesIO
+    _fmu_xml: etree._ElementTree
+    _fmu_tree: etree._Element
+    _scalar_variables_to_be_removed: List[str] = []
 
-    _fmu_file: io.BytesIO
-    _fmu_path: Path
-
-    def __init__(self, fmu_file: Union[Path, str, FileData]):
+    def __init__(self, fmu_file: Union[Path, str]):
         """
         Instantiates a fmu that is defined by the fmu_file_path.
 
         :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
         :return:
         """
-        if isinstance(fmu_file, FileData):
-            self._fmu_path = Path(fmu_file.name).name
-            self._fmu_file = fmu_file.data
-        else:
-            self._fmu_path = Path(fmu_file).absolute()
-            if not self._fmu_path.is_file():
-                raise FileNotFoundError(f"FMU could not be found: {self._fmu_path.as_posix()}")
-            with open(file=self._fmu_path, mode="rb") as file:
-                self._fmu_file = io.BytesIO(file.read())
+        self._scalar_variables_to_be_removed = []
 
-        self.model_description: Optional[FMIModelDescription] = None
-        self._fmu_xml: Optional[etree.ElementTree] = None
-        self._fmu_tree: Optional[etree.Element] = None
+        self._file_name = Path(fmu_file).absolute()
+        if not self._file_name.is_file():
+            raise FileNotFoundError(f"FMU could not be found: {self._file_name.as_posix()}")
+        with open(file=self._file_name, mode="rb") as file:
+            self._data = io.BytesIO(file.read())
 
-        self._fmu_xml, self._fmu_tree = self.__load_fmu()
-        schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
-        self.__parse_fmu_model_description(fmu_tree=self._fmu_tree)
+        self.__load_fmu_data()
+        self.__validate_fmu()
+        self.__parse_fmu_model_description()
 
-    def __load_fmu(self, fmu_file: Optional[io.BytesIO] = None) -> (etree.ElementTree, etree.Element):
+    def __load_fmu_data(self):
         """
         Loads fmu file and initializes the xml data (fmu_xml) and the xml tree (fmu_tree).
-        If no fmu file is found, FileNotFoundError is raised.
 
-        :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
-        :return: fmu_xml: ElementTree Object, root if the ElementTree, containing Element
+        :return:
         """
-        if fmu_file is None:
-            fmu_file = self._fmu_file
-
-        if fmu_file:
-            with ZipFile(file=fmu_file, mode="r") as archive:
+        if self._data:
+            with ZipFile(file=self._data, mode="r") as archive:
                 with archive.open("modelDescription.xml") as description:
                     fmu_xml = etree.parse(source=description)
             fmu_tree = fmu_xml.getroot()
         else:
             raise FileNotFoundError(f"Fmu_path was not set.")
+        self._fmu_xml = fmu_xml
+        self._fmu_tree = fmu_tree
 
-        return fmu_xml, fmu_tree
-
-    def __validate_fmu(self, fmu_xml: etree.ElementTree) -> bool:
+    def __validate_fmu(self) -> bool:
         """
         Validation against the fmi2ModelDescription.xsd schema.
-        If validation failed, only a log info is transmitted.
 
-        :param fmu_xml: xml Description as ElementTree to be validated.
         :return: True if validation succeeded. False, if not.
         """
-
         schema_path = Path(__file__).parents[1].joinpath("data", "schema", "fmi2ModelDescription.xsd")
         xml_schema = None
         try:
             xml_schema = etree.XMLSchema(etree.parse(source=schema_path))
-            if xml_schema.validate(fmu_xml):
+            if xml_schema.validate(self._fmu_xml):
                 return True
             else:
-                log.info(f"fmi2ModelDescription.xsd schema validation failed.")
+                log.warning(f"fmi2ModelDescription.xsd schema validation failed.")
 
         except Exception:
-            log.error(f"Could not parse {schema_path}.")
+            raise ValueError(f"Could not parse {schema_path} modelDescription xml of {self._file_name}.")
 
         return False
 
-    def __parse_fmu_default_experiment_parameter(self, fmu_tree: etree.Element) -> DefaultExperiment:
-        xml_node = fmu_tree.find("DefaultExperiment")
+    def __parse_fmu_default_experiment_parameter(self) -> DefaultExperiment:
+        """
+        Parses the DefaultExperiment parameters of the FMU modelDescription.xml.
+
+        :return: DefaultExperiment object
+        """
+        xml_node = self._fmu_tree.find("DefaultExperiment")
         if xml_node is not None:
             start_time = float(xml_node.get("startTime")) if "startTime" in xml_node.attrib else None
             stop_time = float(xml_node.get("stopTime")) if "stopTime" in xml_node.attrib else None
@@ -125,11 +119,16 @@ class FMUAdapter:
             raise KeyError("Could not find DefaultExperiment parameters in FMU modelDescription.xml.")
         return default_experiment
 
-    def __parse_fmu_simulation_type(self, fmu_tree: etree.Element) -> Union[CoSimulation, ModelExchange]:
+    def __parse_fmu_simulation_type(self) -> Union[CoSimulation, ModelExchange]:
+        """
+        Parses FMU parameters that define the simulation type relevant for simulation master.
+
+        :return: CoSimulation or ModelExchange parameter object
+        """
         # CoSimulation
         simulation_type = None
-        if fmu_tree.find("CoSimulation") is not None:
-            xml_node = fmu_tree.find("CoSimulation")
+        if self._fmu_tree.find("CoSimulation") is not None:
+            xml_node = self._fmu_tree.find("CoSimulation")
             simulation_type = \
                 CoSimulation(model_identifier=xml_node.get("modelIdentifier"),
                              needs_execution_tool=(xml_node.get("needsExecutionTool") == "true"),
@@ -146,7 +145,7 @@ class FMUAdapter:
                              provides_directional_derivative=(xml_node.get("providesDirectionalDerivative") == "true"),
                              can_serialize_fmu_state=(xml_node.get("canSerializeFMUstate") == "true"))
 
-        elif fmu_tree.find("ModelExchange") is not None:
+        elif self._fmu_tree.find("ModelExchange") is not None:
             # TODO Model exchange
             raise NotImplementedError("Parsing ModelExchange is not implemented.")
         else:
@@ -154,7 +153,13 @@ class FMUAdapter:
 
         return simulation_type
 
-    def __parse_fmu_scalar_variables(self, fmu_tree: etree.Element) -> List[FMUScalarVariable]:
+    def __parse_fmu_scalar_variables(self, fmu_tree: etree._Element) -> List[FMUScalarVariable]:
+        """
+        Parses all scalar variables of the FMU.
+
+        :param fmu_tree: xml tree of the FMU.
+        :return: List of FMUScalarVariable objects.
+        """
         variables = list()
         xml_variables = fmu_tree.findall("ModelVariables//ScalarVariable")
         if xml_variables:
@@ -206,7 +211,7 @@ class FMUAdapter:
 
         return variables
 
-    def __parse_fmu_model_description(self, fmu_tree: etree.Element):
+    def __parse_fmu_model_description(self, fmu_tree: etree._Element):
         """
         Parsing the xml modelDescription.xml into an object for better handling.
 
@@ -220,8 +225,8 @@ class FMUAdapter:
                                     variable_naming_convention=fmu_tree.get("variableNamingConvention"),
                                     number_of_event_indicators=fmu_tree.get("numberOfEventIndicators"),
                                     model_variables=ModelVariables(scalar_variables=
-                                                                   self.__parse_fmu_scalar_variables(
-                                                                       fmu_tree=fmu_tree)),
+                                    self.__parse_fmu_scalar_variables(
+                                        fmu_tree=fmu_tree)),
                                     default_experiment=self.__parse_fmu_default_experiment_parameter(fmu_tree=fmu_tree),
                                     fmu_simulation_type=self.__parse_fmu_simulation_type(fmu_tree=fmu_tree),
                                     description=fmu_tree.get("description"),
@@ -352,16 +357,15 @@ class FMUAdapter:
         """
         self.__set_scalar_variable_by_name(set_values=FMUScalarVariable(name=name, start=value))
 
-    def __update_xml_model_description_by_name(self, name: str):
+    def __update_xml_model_description_scalar_variable(self, variable: FMUScalarVariable):
         """
         Updates a single ScalarVariable from the fmu object in the xml model description (_fmu_tree).
         The updated ScalarVariable is defined by its name.
 
-        :param name: Defines the ScalarVariable, which should be updated in the _fmu_tree.
-        :return:
+        :param variable: The ScalarVariable, which should be updated in the _fmu_tree.
+        :return: None
         """
-        variable = self.get_scalar_variable_by_name(name=name)
-        element = self._fmu_tree.find(f"ModelVariables//ScalarVariable[@name='{name}']")
+        element = self._fmu_tree.find(f"ModelVariables//ScalarVariable[@name='{variable.name}']")
 
         # setting attributes
         if variable.causality is not None:
@@ -400,8 +404,16 @@ class FMUAdapter:
 
         :return:
         """
+        # remove all variables, which are marked for removal
+        while self._scalar_variables_to_be_removed:
+            remove_var = self._scalar_variables_to_be_removed.pop()
+            self.__remove_xml_variable_by_name(name=remove_var)
+            log.debug("Removed variable %s from xml model description.", remove_var)
+
+        # update all variables, which are remaining
         for variable in self.model_description.model_variables.scalar_variables:
-            self.__update_xml_model_description_by_name(name=variable.name)
+            self.__update_xml_model_description_scalar_variable(variable=variable)
+            log.debug("Updated variable %s in xml model description.", variable.name)
 
     def __remove_xml_variable_by_name(self, name: str):
         """
@@ -416,30 +428,25 @@ class FMUAdapter:
 
     def remove_scalar_variable_by_name(self, name: str):
         """
-        This method encapsulates deleting the ScalarVariable from the fmu object in the xml model description (_fmu_tree).
+        This method encapsulates deleting the ScalarVariable from the internal structure.
 
         :param name: Name of the desired ScalarVariable, which should be deleted.
         :return:
         """
         variable = self.get_scalar_variable_by_name(name=name)
-        self.model_description.model_variables.scalar_variables.remove(variable)
-        self.__remove_xml_variable_by_name(name=name)
+        if variable is None:
+            raise KeyError(f"ScalarVariable with name '{name}' could not be found.")
+        else:
+            self._scalar_variables_to_be_removed.append(variable.name)
+            self.model_description.model_variables.scalar_variables.remove(variable)
 
-    def get_file_data(self, file_name: Optional[Union[Path, str]] = None) -> FileData:
+    def get_zip_file_bytes_io(self) -> io.BytesIO:
         """
-        Updates all variables and creates an FMU FileData object.
-        :param file_name: Fmu name can be specified optionally. Can be passed with or without suffix ".fmu".
-        If not specified, the name of the original fmu is taken.
-        :return:
+        Returns the fmu as a BytesIO object.
+
+        :return: fmu as a BytesIO object.
         """
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
-        # if no name is given, the original name is taken
-
-        if file_name is not None:
-            file_name = Path(file_name).stem
-        else:
-            file_name = self._fmu_path.stem
-        file_name = Path(file_name).with_suffix(suffix=".fmu")
 
         # update tree and generate modelDescription.xml
         self.__update_xml_model_description()
@@ -447,7 +454,7 @@ class FMUAdapter:
 
         # copy fmu and insert new modelDescription.xml
         io_file_container = io.BytesIO()
-        with ZipFile(file=self._fmu_file, mode='r') as zip_in:
+        with ZipFile(file=self._data, mode='r') as zip_in:
             with ZipFile(file=io_file_container, mode='w', compression=ZIP_DEFLATED) as zip_out:
                 for item in zip_in.infolist():
                     buffer = zip_in.read(item.filename)
@@ -459,8 +466,7 @@ class FMUAdapter:
                 # write new customized modelDescription.xml
                 zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
 
-        data_file = FileData(name=file_name, file_data=io_file_container)
-        return data_file
+        return io_file_container
 
     def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
         """
@@ -468,14 +474,27 @@ class FMUAdapter:
         of the current fmu instance.
 
         :param tar_dir_path: Target directory where the new fmu should be stored.
-        :param file_name: Fmu name can be specified optionally. Can be passed with or without suffix ".fmu".
+        :param file_name: FMU name can be specified optionally. Can be passed with or without suffix ".fmu".
         If not specified, the name of the original fmu is taken.
         :return: Full file name including path of the generated fmu.
         """
         # copy, edit, write fmu because files inside an archive cannot simply be changed.
-        # if no name is given, the original name is taken
+        dir_path = Path(tar_dir_path)
+        dir_path.mkdir(parents=False, exist_ok=True)
+        if file_name is None:
+            file_name = Path(self._data.name).with_suffix(".fmu")
+        else:
+            file_name = Path(file_name)
+            file_name = file_name.with_suffix(".fmu")
+        full_path = dir_path.joinpath(file_name)
 
-        fmu_file_data = self.get_file_data(file_name=file_name)
-        fmu_path = fmu_file_data.save_file(universal_path=tar_dir_path)
-        log.info(f"Fmu {fmu_file_data.name} saved to {fmu_path}.")
-        return fmu_path
+        with open(file=full_path, mode="wb") as f:
+            f.write(self.data.getbuffer())
+
+        if not full_path.is_file():
+            raise FileExistsError(f"File was not saved to {str(full_path)}")
+
+        log.debug(f"File saved to {str(full_path)}.")
+        log.info(f"Fmu {self._file_name.name} saved to {full_path}.")
+
+        return full_path
