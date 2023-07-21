@@ -65,6 +65,7 @@ class FMUScalarVariable:
     start: Optional[Union[str, float, bool, int, Enum]] = None
     unit: Optional[FMUUnit] = None
 
+
 @dataclass
 class ModelVariables:
     """
