@@ -120,6 +120,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Notepad++ txt backup
+*.bak
+
 # mypy
 .mypy_cache/
 .dmypy.json
