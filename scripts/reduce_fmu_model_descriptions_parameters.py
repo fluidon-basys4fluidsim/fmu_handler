@@ -13,11 +13,11 @@ Usage:
 import argparse
 import json
 import fnmatch
+import logging
 from pathlib import Path
 from typing import Union, List, Optional
 from fmu_handler.fmu_adapter import FMUAdapter
 from fmu_handler.fmu_types import FMUScalarVariable, Causality
-from utils.custom_file_handling import check_create_directory_path
 
 
 def _cut_fmu_model_description_with_lists(keep_list: List, delete_list: List, fmu: FMUAdapter)\
@@ -49,14 +49,14 @@ def _cut_fmu_model_description_with_lists(keep_list: List, delete_list: List, fm
 
 
 def reduce_fmu_model_descriptions_in_directory(dir_path: Union[str, Path],
-                                               output_path: Optional[Union[str, Path]] = None,
+                                               output_dir: Optional[Union[str, Path]] = None,
                                                output_suffix: Optional[str] = None):
     """
     According to the parameter_reduction_config.json file in the directory, the model description of all fmus in this
     directory are reduced.
 
     :param dir_path: Path to the directory containing the fmus.
-    :param output_path: If None, the reduced fmus are saved and possibly overwritten
+    :param output_dir: If None, the reduced fmus are saved and possibly overwritten
     in the same directory as the original ones.
     :param output_suffix: If None, the reduced fmus are saved and possibly overwritten. Otherwise, the suffix is added
     to the modified fmu files.
@@ -84,8 +84,9 @@ def reduce_fmu_model_descriptions_in_directory(dir_path: Union[str, Path],
                 keep_list=keep_list, delete_list=delete_list, fmu=fmu
             )
 
-            if output_path is not None:
-                save_dir_path = check_create_directory_path(dir_path=output_path)
+            if output_dir is not None:
+                save_dir_path = Path(output_dir).absolute()
+                save_dir_path.mkdir(exist_ok=True, parents=True)
             else:
                 save_dir_path = dir_path
 
@@ -115,9 +116,11 @@ def reduce_model_descriptions_in_directory_console():
     if not args.dir_path:
         raise ValueError("No directory path specified.")
     reduce_fmu_model_descriptions_in_directory(
-        dir_path=args.dir_path, output_path=args.output_path, output_suffix=args.output_suffix
+        dir_path=args.dir_path, output_dir=args.output_path, output_suffix=args.output_suffix
     )
 
 
 if __name__ == "__main__":
+    log = logging.getLogger("fmu_handler")
+    log.setLevel("INFO")
     reduce_model_descriptions_in_directory_console()

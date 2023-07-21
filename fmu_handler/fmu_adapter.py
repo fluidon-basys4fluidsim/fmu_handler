@@ -16,7 +16,7 @@ log_config: dict = {
     "datefmt": '%y-%m-%d %H:%M:%S',
     "stream": sys.stdout,
 }
-log = logging.getLogger("fmu_adapter")
+log = logging.getLogger("fmu_handler")
 log.setLevel(log_config["log_level"])
 handler = logging.StreamHandler(log_config['stream'])
 formatter = logging.Formatter(log_config['format'], datefmt=log_config['datefmt'])
