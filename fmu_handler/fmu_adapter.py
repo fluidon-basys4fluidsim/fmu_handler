@@ -1,19 +1,32 @@
 import io
+import sys
 from typing import Union, Optional, List
 from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
 from pathlib import Path
-from utils.custom_logger import *
-import lxml.etree
-from fmu_handler.fmu_types import *
 from lxml import etree
+import logging
+
+from .fmu_types import *
+
 from aas_generator.stores.file_stores import FileData
 
 __all__ = [
     "FMUAdapter"
 ]
 
-log = get_logger("FMU_Handler")
+log_config: dict = {
+    "log_level": "DEBUG",
+    "format": "%(asctime)s [%(levelname)s] [%(module)s] [%(funcName)s] - %(message)s",
+    "datefmt": '%y-%m-%d %H:%M:%S',
+    "stream": sys.stdout,
+    }
+log = logging.getLogger("fmu_adapter")
+log.setLevel(log_config["log_level"])
+handler = logging.StreamHandler(log_config['stream'])
+formatter = logging.Formatter(log_config['format'], datefmt=log_config['datefmt'])
+handler.setFormatter(formatter)
+log.addHandler(handler)
 
 
 class FMUAdapter:
@@ -46,20 +59,20 @@ class FMUAdapter:
                 self._fmu_file = io.BytesIO(file.read())
 
         self.model_description: Optional[FMIModelDescription] = None
-        self._fmu_xml: Optional[etree._ElementTree] = None
-        self._fmu_tree: Optional[etree._Element] = None
+        self._fmu_xml: Optional[etree.ElementTree] = None
+        self._fmu_tree: Optional[etree.Element] = None
 
         self._fmu_xml, self._fmu_tree = self.__load_fmu()
         schema_validation = self.__validate_fmu(fmu_xml=self._fmu_xml)
         self.__parse_fmu_model_description(fmu_tree=self._fmu_tree)
 
-    def __load_fmu(self, fmu_file: Optional[io.BytesIO] = None) -> (lxml.etree._ElementTree, lxml.etree._Element):
+    def __load_fmu(self, fmu_file: Optional[io.BytesIO] = None) -> (etree.ElementTree, etree.Element):
         """
         Loads fmu file and initializes the xml data (fmu_xml) and the xml tree (fmu_tree).
         If no fmu file is found, FileNotFoundError is raised.
 
         :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
-        :return: fmu_xml: ElementTree Object, root if the ElementTree, containing _Element
+        :return: fmu_xml: ElementTree Object, root if the ElementTree, containing Element
         """
         if fmu_file is None:
             fmu_file = self._fmu_file
@@ -74,12 +87,12 @@ class FMUAdapter:
 
         return fmu_xml, fmu_tree
 
-    def __validate_fmu(self, fmu_xml: lxml.etree._ElementTree) -> bool:
+    def __validate_fmu(self, fmu_xml: etree.ElementTree) -> bool:
         """
         Validation against the fmi2ModelDescription.xsd schema.
         If validation failed, only a log info is transmitted.
 
-        :param fmu_xml: xml Description as _ElementTree to be validated.
+        :param fmu_xml: xml Description as ElementTree to be validated.
         :return: True if validation succeeded. False, if not.
         """
 
@@ -97,7 +110,7 @@ class FMUAdapter:
 
         return False
 
-    def __parse_fmu_default_experiment_parameter(self, fmu_tree: lxml.etree._Element) -> DefaultExperiment:
+    def __parse_fmu_default_experiment_parameter(self, fmu_tree: etree.Element) -> DefaultExperiment:
         xml_node = fmu_tree.find("DefaultExperiment")
         if xml_node is not None:
             start_time = float(xml_node.get("startTime")) if "startTime" in xml_node.attrib else None
@@ -112,7 +125,7 @@ class FMUAdapter:
             raise KeyError("Could not find DefaultExperiment parameters in FMU modelDescription.xml.")
         return default_experiment
 
-    def __parse_fmu_simulation_type(self, fmu_tree: lxml.etree._Element) -> Union[CoSimulation, ModelExchange]:
+    def __parse_fmu_simulation_type(self, fmu_tree: etree.Element) -> Union[CoSimulation, ModelExchange]:
         # CoSimulation
         simulation_type = None
         if fmu_tree.find("CoSimulation") is not None:
@@ -141,7 +154,7 @@ class FMUAdapter:
 
         return simulation_type
 
-    def __parse_fmu_scalar_variables(self, fmu_tree: lxml.etree._Element) -> List[FMUScalarVariable]:
+    def __parse_fmu_scalar_variables(self, fmu_tree: etree.Element) -> List[FMUScalarVariable]:
         variables = list()
         xml_variables = fmu_tree.findall("ModelVariables//ScalarVariable")
         if xml_variables:
@@ -193,7 +206,7 @@ class FMUAdapter:
 
         return variables
 
-    def __parse_fmu_model_description(self, fmu_tree: lxml.etree._Element):
+    def __parse_fmu_model_description(self, fmu_tree: etree.Element):
         """
         Parsing the xml modelDescription.xml into an object for better handling.
 
@@ -230,7 +243,6 @@ class FMUAdapter:
         :return: A list of ScalarVariables that matches the query request.
         """
         variables = []
-
 
         for element in self.model_description.model_variables.scalar_variables:
             if query is not None:
