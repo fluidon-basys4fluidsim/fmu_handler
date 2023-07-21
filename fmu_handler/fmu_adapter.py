@@ -1,15 +1,10 @@
-import io
-import sys
+import io, sys, enum, logging
 from typing import Union, Optional, List
-from enum import Enum
 from zipfile import ZipFile, ZIP_DEFLATED
 from pathlib import Path
 from lxml import etree
-import logging
 
 from .fmu_types import *
-
-from aas_generator.stores.file_stores import FileData
 
 __all__ = [
     "FMUAdapter"
@@ -32,10 +27,10 @@ log.addHandler(handler)
 class FMUAdapter:
     """
     Helper class to handle the modelDescriptionParameter of an FMU with the following fuctions:
-    - Query all FMU ScalarVariables
-    - Set start value of FMU
-    - Save a new copy of the FMU with the updated parameters
-
+    - Query for defined FMUScalarVariables
+    - Set start value of FMUScalarVariable
+    - Remove FMUScalarVariables
+    - Save a new fmu file with the updated parameters
     """
     model_description: FMIModelDescription
     _file_name: Path
@@ -211,13 +206,14 @@ class FMUAdapter:
 
         return variables
 
-    def __parse_fmu_model_description(self, fmu_tree: etree._Element):
+    def __parse_fmu_model_description(self):
         """
         Parsing the xml modelDescription.xml into an object for better handling.
 
         :return:
         """
-        if fmu_tree is not None:
+        if self._fmu_tree is not None:
+            fmu_tree = self._fmu_tree
             self.model_description = \
                 FMIModelDescription(fmi_version=fmu_tree.get("fmiVersion"),
                                     model_name=fmu_tree.get("modelName"),
@@ -225,10 +221,9 @@ class FMUAdapter:
                                     variable_naming_convention=fmu_tree.get("variableNamingConvention"),
                                     number_of_event_indicators=fmu_tree.get("numberOfEventIndicators"),
                                     model_variables=ModelVariables(scalar_variables=
-                                    self.__parse_fmu_scalar_variables(
-                                        fmu_tree=fmu_tree)),
-                                    default_experiment=self.__parse_fmu_default_experiment_parameter(fmu_tree=fmu_tree),
-                                    fmu_simulation_type=self.__parse_fmu_simulation_type(fmu_tree=fmu_tree),
+                                    self.__parse_fmu_scalar_variables(fmu_tree=fmu_tree)),
+                                    default_experiment=self.__parse_fmu_default_experiment_parameter(),
+                                    fmu_simulation_type=self.__parse_fmu_simulation_type(),
                                     description=fmu_tree.get("description"),
                                     author=fmu_tree.get("author"),
                                     version=fmu_tree.get("version"),
@@ -239,7 +234,7 @@ class FMUAdapter:
         else:
             raise KeyError("Could not parse modelDescription parameters from FMU modelDescription.xml.")
 
-    def query_scalar_variables(self, query: FMUScalarVariable) -> list[FMUScalarVariable]:
+    def query_scalar_variables(self, query: Optional[FMUScalarVariable] = None) -> list[FMUScalarVariable]:
         """
         Returns a list of all ScalarVariable that match the query request. Not queried attributes should be set None.
         If no ScalarVariable was found, list is returned empty.
@@ -247,8 +242,10 @@ class FMUAdapter:
         :param query: Defines parameter of attributes that should be queried.
         :return: A list of ScalarVariables that matches the query request.
         """
-        variables = []
+        if query is None:
+            return self.model_description.model_variables.scalar_variables
 
+        variables = []
         for element in self.model_description.model_variables.scalar_variables:
             if query is not None:
                 if query.name and not element.name == query.name:
@@ -347,7 +344,7 @@ class FMUAdapter:
             else:
                 raise KeyError(f"Desired attribute is not set in original fmu. Value could not be set.")
 
-    def set_start_value(self, name: str, value: Union[str, float, bool, int, Enum]):
+    def set_start_value(self, name: str, value: Union[str, float, bool, int, enum.Enum]):
         """
         This method encapsulates setting the staring value using __set_scalar_variable_by_name().
 
@@ -466,9 +463,10 @@ class FMUAdapter:
                 # write new customized modelDescription.xml
                 zip_out.writestr(zinfo_or_arcname="modelDescription.xml", data=new_model_description_xml)
 
-        return io_file_container
+        self._data = io_file_container
+        return self._data
 
-    def save_fmu_copy(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
+    def save_fmu(self, tar_dir_path: Union[Path, str], file_name: Optional[Union[Path, str]] = None) -> Path:
         """
         Saves a copy from the original fmu into the defined target directory including the updated modelDescription.xml
         of the current fmu instance.
@@ -482,14 +480,16 @@ class FMUAdapter:
         dir_path = Path(tar_dir_path)
         dir_path.mkdir(parents=False, exist_ok=True)
         if file_name is None:
-            file_name = Path(self._data.name).with_suffix(".fmu")
+            file_name = Path(self._file_name.name).with_suffix(".fmu")
         else:
             file_name = Path(file_name)
             file_name = file_name.with_suffix(".fmu")
         full_path = dir_path.joinpath(file_name)
 
+        # update tree and generate modelDescription.xml
+        self.get_zip_file_bytes_io()
         with open(file=full_path, mode="wb") as f:
-            f.write(self.data.getbuffer())
+            f.write(self._data.getbuffer())
 
         if not full_path.is_file():
             raise FileExistsError(f"File was not saved to {str(full_path)}")

@@ -1,12 +1,10 @@
-import unittest
-import os
+import unittest, logging
 from pathlib import Path
-from utils.custom_logger import *
 from fmu_handler.fmu_adapter import FMUAdapter
 from fmu_handler.fmu_types import *
 
 # change debugging here
-log = get_logger("FMU_Handler")
+log = logging.getLogger("fmu_adapter")
 log.setLevel(logging.INFO)
 
 test_data_path = Path(__file__).parents[0].joinpath("test_data").absolute()
@@ -65,21 +63,21 @@ class TestFMUAdapter(unittest.TestCase):
 
     def test_remove_scalar_variable_by_name(self):
         fmu = self.fmu
-
-        for scalar_variable in fmu.query_scalar_variables():
+        for scalar_variable in fmu.query_scalar_variables().copy():
             fmu.remove_scalar_variable_by_name(name=scalar_variable.name)
-        file_name = fmu.save_fmu_copy(file_name="deleted_parameter", tar_dir_path=self.tar_dir)
+        self.assertEqual(len(fmu.query_scalar_variables()), 0)
+        file_name = fmu.save_fmu(file_name="deleted_parameter", tar_dir_path=self.tar_dir)
+        with self.assertRaises(KeyError):
+            FMUAdapter(fmu_file=file_name)
+        file_name.unlink(missing_ok=False)
 
     def test_save_fmu_copy(self):
         fmu = self.fmu
-
-        self.test_set_start_value()
-        file_name = fmu.save_fmu_copy(file_name="dummy_fmu", tar_dir_path=self.tar_dir)
-
+        fmu.set_start_value(name="QAInput", value=69)
+        file_name = fmu.save_fmu(file_name="dummy_fmu", tar_dir_path=self.tar_dir)
         fmu = FMUAdapter(fmu_file=file_name)
-        self.assertEqual(fmu.get_scalar_variable_by_name(name="QAInput").start, str(69))
-
-        os.remove(path=file_name)
+        self.assertEqual(69, fmu.get_scalar_variable_by_name(name="QAInput").start)
+        file_name.unlink(missing_ok=False)
 
 
 class TestOtherFMUs(unittest.TestCase):
@@ -90,8 +88,8 @@ class TestOtherFMUs(unittest.TestCase):
 
     def test_general_fmu_operations(self):
         for fmu_file in self.all_fmus:
-            print(fmu_file)
+            log.debug(fmu_file)
             fmu = FMUAdapter(fmu_file=fmu_file)
-            print(fmu.model_description)
+            log.debug(fmu.model_description)
             for scalar_variable in fmu.model_description.model_variables.scalar_variables:
-                print(scalar_variable)
+                log.debug(scalar_variable)
