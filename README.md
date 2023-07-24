@@ -8,21 +8,26 @@ Refer to the `ScalarVariable:` class to see the currently supported attributes. 
 
 ## Setup
 
-Follow these steps to install and use the module:
+Install the [BaSy4FluidSim/fmu_handler](https://github.com/fluidon-basys4fluidsim/fmu_handler)
+repository (https://github.com/fluidon-basys4fluidsim/fmu_handler.git).
 
-1. Clone the module from the repository: [BaSy4FluidSim/fmu_handler](https://github.com/fluidon-basys4fluidsim)
+Direct installation via
+```bash
+pip install git+https://github.com/fluidon-basys4fluidsim/fmu_handler.git
+```
 
-2. Install the module with pip:
+or
 
-   ```bash
-   pip install -e [module_path]
-   ```
+clone and bind to project or make local installation with modifications.
+```bash
+pip install - e [local_repo_path]
+```
 
-   Alternatively, you can add the module to your Python project or to the system path:
 
 ## Usage
 
-The `fmu_handler` can be used for efficiently interacting with FMU files. Here's a simple example of how the module can be used:
+The `fmu_handler` can be used for efficiently interacting with FMU files.  
+Here's a simple example of how the module can be used:
 
 
 ```python
@@ -34,8 +39,10 @@ fmu.set_start_value(variable=variable.name, value=42)
 fmu.save_fmu()
 ```
 
-Additionally, there is function to reduce variables in the modelDescription.xml of FMUs in a folder.
-For usage see [reduce_fmu_model_descriptions_parameters.py](scripts%2Freduce_fmu_model_descriptions_parameters.py).
+Additionally, there is a function to reduce variables in the modelDescription.xml of FMUs in a folder:  
+For usage from python IDE see [reduce_fmu_model_descr_pars.py](scripts%2Freduce_fmu_model_descr_pars.py).  
+For usage from console see [reduce_fmu_model_descr_pars_console.py](scripts%2Freduce_fmu_model_descr_pars_console.py).
+
 
 ## License
 

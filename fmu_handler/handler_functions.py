@@ -1,23 +1,13 @@
-#!/usr/bin/env python3
-
-"""
-Script to cut the model description of fmus in a directory. The model description is cut according to the
-parameter_reduction_config.json file in the directory. If no output directory or suffix is specified, the original
-fmus are overwritten.
-
-Usage:
-
-
-"""
-
-import argparse
 import json
 import fnmatch
-import logging
 from pathlib import Path
 from typing import Union, List, Optional
-from fmu_handler.fmu_adapter import FMUAdapter
+from fmu_handler.fmu_adapter import FMUAdapter, log
 from fmu_handler.fmu_types import FMUScalarVariable, Causality
+
+__all__ = [
+    "reduce_fmu_model_descriptions_in_directory"
+]
 
 
 def _cut_fmu_model_description_with_lists(keep_list: List, delete_list: List, fmu: FMUAdapter)\
@@ -48,36 +38,39 @@ def _cut_fmu_model_description_with_lists(keep_list: List, delete_list: List, fm
     return fmu
 
 
-def reduce_fmu_model_descriptions_in_directory(dir_path: Union[str, Path],
+def reduce_fmu_model_descriptions_in_directory(fmu_dir: Union[str, Path],
                                                output_dir: Optional[Union[str, Path]] = None,
                                                output_suffix: Optional[str] = None):
     """
     According to the parameter_reduction_config.json file in the directory, the model description of all fmus in this
     directory are reduced.
 
-    :param dir_path: Path to the directory containing the fmus.
+    :param fmu_dir: Path to the directory containing the fmus.
     :param output_dir: If None, the reduced fmus are saved and possibly overwritten
     in the same directory as the original ones.
     :param output_suffix: If None, the reduced fmus are saved and possibly overwritten. Otherwise, the suffix is added
     to the modified fmu files.
     :return:
     """
-    dir_path = Path(dir_path)
-    if not dir_path.is_dir():
-        raise NotADirectoryError(f"Path {dir_path} is not a directory.")
+    fmu_dir = Path(fmu_dir)
+    if not fmu_dir.is_dir():
+        raise NotADirectoryError(f"Path {fmu_dir} is not a directory.")
 
     if not output_suffix:
         output_suffix = ""
     elif not output_suffix.startswith("_"):
         output_suffix = f"_{output_suffix}"
 
-    with open(dir_path.joinpath("parameter_reduction_config.json"), "r") as config_file:
+    with open(fmu_dir.joinpath("parameter_reduction_config.json"), "r") as config_file:
         config_data = json.load(config_file)
         config_file.close()
 
     keep_list = config_data.get("keep_elements", [])
     delete_list = config_data.get("delete_elements", [])
-    for fmu_file in dir_path.iterdir():
+
+    log.info(f"Reducing fmu model descriptions in {fmu_dir}.")
+
+    for fmu_file in fmu_dir.iterdir():
         if fmu_file.suffix == ".fmu":
             fmu = FMUAdapter(fmu_file=fmu_file)
             fmu = _cut_fmu_model_description_with_lists(
@@ -88,39 +81,8 @@ def reduce_fmu_model_descriptions_in_directory(dir_path: Union[str, Path],
                 save_dir_path = Path(output_dir).absolute()
                 save_dir_path.mkdir(exist_ok=True, parents=True)
             else:
-                save_dir_path = dir_path
+                save_dir_path = fmu_dir
 
             fmu.save_fmu(file_name=f"{fmu_file.stem}{output_suffix}", tar_dir_path=save_dir_path)
 
 
-def reduce_model_descriptions_in_directory_console():
-    parser = argparse.ArgumentParser(
-        description="Reduce the model description of all fmus in a directory according to the "
-                    "parameter_reduction_config.json file in the directory."
-    )
-    parser.add_argument(
-        "dir_path", type=str, default=Path.cwd(),
-        help="Path to the directory containing the fmus."
-    )
-    parser.add_argument(
-        "-o", "--output_path", type=str, default=None,
-        help="If None, the reduced fmus are saved and possibly overwritten in the same directory as the original ones."
-    )
-    parser.add_argument(
-        "-s", "--output_suffix", type=str, default=None,
-        help="If None, the reduced fmus are saved and possibly overwritten. Otherwise, the suffix is added to the "
-             "modified fmu files."
-    )
-
-    args = parser.parse_args()
-    if not args.dir_path:
-        raise ValueError("No directory path specified.")
-    reduce_fmu_model_descriptions_in_directory(
-        dir_path=args.dir_path, output_dir=args.output_path, output_suffix=args.output_suffix
-    )
-
-
-if __name__ == "__main__":
-    log = logging.getLogger("fmu_handler")
-    log.setLevel("INFO")
-    reduce_model_descriptions_in_directory_console()

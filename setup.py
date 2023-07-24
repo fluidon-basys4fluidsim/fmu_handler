@@ -12,10 +12,10 @@ setup(
     author='Raphael Alt',
     author_email='Raphael.Alt@fluidon.com',
     license='MIT',
-    description='Modules to handle Functional Mock-up Unit (FMU) files (".fmu").',
+    description='Module to handle the modelDescription.xml of Functional Mock-up Unit (FMU) files (".fmu").',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/fluidon-basys4fluidsim',
-    packages=find_packages(),
+    packages=find_packages(exclude=['test']),
     install_requires=required,
 )
