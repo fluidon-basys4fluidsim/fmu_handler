@@ -20,7 +20,7 @@ or
 
 clone and bind to project or make local installation with modifications.
 ```bash
-pip install - e [local_repo_path]
+pip install -e [local_repo_path]
 ```
 
 
