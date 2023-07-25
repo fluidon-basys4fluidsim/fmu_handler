@@ -39,20 +39,33 @@ class FMUAdapter:
     _fmu_tree: etree._Element
     _scalar_variables_to_be_removed: List[str] = []
 
-    def __init__(self, fmu_file: Union[Path, str]):
+    def __init__(self, fmu_file: Optional[Union[Path, str]] = None, data: Optional[io.BytesIO] = None,
+                 file_name: Optional[Union[Path, str]] = None):
         """
         Instantiates a fmu that is defined by the fmu_file_path.
 
-        :param fmu_file: Specifies the path of the fmu. Absolute path is recommended.
-        :return:
+        :param fmu_file: Specifies the path of the fmu. Absolute path is recommended. If provided,
+        data and file_name are not considered.
+        :param data: Specifies the data of the fmu. If provided, file_name must also be provided.
+        :param file_name: Specifies the name of the fmu.
+        :return: None
         """
         self._scalar_variables_to_be_removed = []
 
-        self._file_name = Path(fmu_file).absolute()
-        if not self._file_name.is_file():
-            raise FileNotFoundError(f"FMU could not be found: {self._file_name.as_posix()}")
-        with open(file=self._file_name, mode="rb") as file:
-            self._data = io.BytesIO(file.read())
+        if fmu_file is not None:
+            self._file_name = Path(fmu_file).absolute()
+            if not self._file_name.is_file():
+                raise FileNotFoundError(f"FMU could not be found: {self._file_name.as_posix()}")
+            with open(file=self._file_name, mode="rb") as file:
+                self._data = io.BytesIO(file.read())
+        elif data is not None and file_name is not None:
+            self._file_name = Path(file_name).absolute()
+            if isinstance(data, io.BytesIO):
+                self._data = data
+            else:
+                raise TypeError(f"Data must be of type io.BytesIO.")
+        else:
+            raise FileNotFoundError(f"No valid input initialization parameter for fmu initialization.")
 
         self.__load_fmu_data()
         self.__validate_fmu()
