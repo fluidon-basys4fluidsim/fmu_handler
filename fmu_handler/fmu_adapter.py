@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 log_config: dict = {
-    "log_level": "DEBUG",
+    "log_level": "INFO",
     "format": "%(asctime)s [%(levelname)s] [%(module)s] [%(funcName)s] - %(message)s",
     "datefmt": '%y-%m-%d %H:%M:%S',
     "stream": sys.stdout,
