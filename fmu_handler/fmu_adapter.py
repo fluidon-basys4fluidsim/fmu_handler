@@ -68,7 +68,6 @@ class FMUAdapter:
             raise FileNotFoundError(f"No valid input initialization parameter for fmu initialization.")
 
         self.__load_fmu_data()
-        self.__validate_fmu()
         self.__parse_fmu_model_description()
 
     def __load_fmu_data(self):
